@@ -34,50 +34,80 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min")
 
-data.2<-data.1[data.1$redshift==15.20530,]
+data.2<-data.1[data.1$redshift==8.86815,]
 N<-nrow(data.2)
 
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
 
 
-#
+# Prepare data for JAGS
+data.2$Mstar<-(data.2$Mstar-mean(data.2$Mstar))/sd(data.2$Mstar)
+data.2$Mgas<-(data.2$Mgas-mean(data.2$Mgas))/sd(data.2$Mgas)
+data.2$sfr_gas<-(data.2$sfr_gas-mean(data.2$sfr_gas))/sd(data.2$sfr_gas)
+data.2$baryon_fraction<-(data.2$baryon_fraction-mean(data.2$baryon_fraction))/sd(data.2$baryon_fraction)
 
-jags.data <- list(Y= data.3$fEsc,
-                  N = nrow(data.3),
-                  x=(data.3$Mgas-mean(data.3$Mgas))/sd(data.3$Mgas)
-#                  x=log(data.3$Mvir,10)
+
+X<-model.matrix(~Mstar+Mgas+sfr_gas+baryon_fraction,data=data.2)
+# Scale
+
+K<-ncol(Xscale)
+
+
+jags.data <- list(Y= data.2$Y,
+                  N = nrow(data.2),
+                  X=X,
+                  b0 = rep(0,K),
+                  B0=diag(1e-4,K)
 )
 
 
 model<-"model{
 #1. Priors
-b0~dnorm(0,1e-5)
-b1~dnorm(0,1e-5)
-#c0~dnorm(0,1e-5)
-#c1~dnorm(0,1e-5)
-phi~dgamma(0.01,0.01)
+beta~dmnorm(b0[],B0[,])
+#num~dnorm(0,0.0016)
+#denom~dnorm(0,1)
+#sigma<-abs(num/denom)
+#tau<-1/(sigma*sigma)
+#numtheta~dnorm(0,0.0016)
+#denomtheta~dnorm(0,1)
+#theta<-abs(numtheta/denomtheta)
+theta~dgamma(0.01,0.01)
 #2. Likelihood
+
 for(i in 1:N){
-logit(mu[i]) <- b0 + b1*x[i]
-#   sigma[i]<-exp(c0+c1*x[i])
 
-#  p[i] <-max(0.000001,((1-mu[i])*mu[i]*mu[i]-mu[i]*sigma[i]^2)/sigma[i])
-#  q[i] <- max(0.00001,(1-mu[i])*(mu[i]-mu[i]*mu[i]-sigma[i])/sigma[i])
+Y[i] ~ dbeta(shape1[i],shape2[i])
+shape1[i]<-theta*pi[i]
+shape2[i]<-theta*(1-pi[i])
+logit(pi[i]) <- eta[i]
+eta[i]<-inprod(beta[],X[i,])
+ExpY[i]<-pi[i]
+VarY[i]<-pi[i]*(1-pi[i])/(theta+1)
+PRes[i]<-(Y[i]-ExpY[i])/sqrt(VarY[i])
 
-p[i]<-mu[i]*phi
-q[i]<-(1-mu[i])*phi
-  Y[i] ~ dbeta(p[i],q[i])
 
-#3. Prediction
-prediction[i]~dbeta(p[i],q[i])
+#3. Discrepancy measures
+
+newY[i]~dbeta(shape1[i],shape2[i])
+PResNew[i]<-(newY[i]-ExpY[i])/sqrt(VarY[i])
+D[i]<-pow(PRes[i],2)
+DNew[i]<-pow(PResNew[i],2)
+
 }
+Fit<-sum(D[1:N])
+newFit<-sum(DNew[1:N])
 }"
 
-params <- c("b0","b1","prediction")
+params <- c("beta","theta","PRes","Fit","newFit","newY")
 
-inits1=list(b0=rnorm(1,0,1),b1=rnorm(1,0,1),c0=rnorm(1,0,1),c1=rnorm(1,0,1))
-inits2=list(b0=rnorm(1,0,1),b1=rnorm(1,0,1),c0=rnorm(1,0,1),c1=rnorm(1,0,1))
-inits3=list(b0=rnorm(1,0,1),b1=rnorm(1,0,1),c0=rnorm(1,0,1),c1=rnorm(1,0,1))
+inits0  <- function () {
+  list(beta  = rnorm(K, 0, 0.01)  #Regression parameters
+      
+  )  }
+
+inits1=inits0()
+inits2=inits0()
+inits3=inits0()
 
 library(parallel)
 cl <- makeCluster(3)
@@ -95,8 +125,33 @@ jags.logit <- run.jags(method="rjparallel",
 )
 
 jagssamples <- as.mcmc.list(jags.logit)
-summary<-extend.jags(jags.logit,drop.monitor=c("prediction"), summarise=TRUE)
+summary<-extend.jags(jags.logit,drop.monitor=c("PRes","Fit","newFit","newY"), summarise=TRUE)
 print(summary)
+
+L.factors <- data.frame(
+  Parameter=paste("beta[", seq(1:5), "]", sep=""),
+  Label=c("(Intercept)","Mstar","Mgas","sfr_gas","baryon_fraction"))
+beta_post<-ggs(jagssamples,par_labels=L.factors,family=c("beta"))
+
+pdf("beta_scape.pdf")
+ggs_caterpillar(beta_post)+theme_hc()+ylab("")+geom_vline(xintercept=c(0,0), linetype="dotted")+
+theme(legend.position="none",plot.title = element_text(hjust=0.5),
+        axis.title.y=element_text(vjust=0.75),axis.text.x=element_text(size=25),
+        strip.text.x=element_text(size=25),
+        axis.title.x=element_text(vjust=-0.25),
+        text = element_text(size=20),axis.title.x=element_text(size=rel(1)))
+dev.off()
+
+
+
+require(scales)
+Pres<-summary(as.mcmc.list(jags.logit, vars="PRes"),quantiles=0.5)$quantiles
+plot(data.2$baryon_fraction,Pres)
+
+Dispersion = sum(Pres^2)/(N-6)# beta.0, beta.1 and k, 3 parameters
+
+
+
 
 # Diagnostics Confusion Matrix (very unlikely to be good)
 predscape<-summary(as.mcmc.list(jags.logit, vars="prediction"))
@@ -108,15 +163,3 @@ plot(x,data.3$fEsc)
 
 
 
-data("AlcoholUse", package = "zoib")
-AlcoholUse$Grade = as.factor(AlcoholUse$Grade)
-
-post.obj <- zoib(Percentage ~ Grade+Days+Gender|1|Grade+Days+Gender|1,
-                 data = AlcoholUse, random = 1, EUID= AlcoholUse$County,
-                 zero.inflation = TRUE,  one.inflation = FALSE, joint = FALSE, 
-                 n.iter=1000, n.thin=5)  
-post.sample <- post.obj$oripara 
-post.sample.c1<- post.sample[[1]][11:200,]
-post.sample.c2<- post.sample[[2]][11:200,]
-post.sample <- mcmc.list(as.mcmc(post.sample.c1),as.mcmc(post.sample.c2))
-summary(post.sample)
