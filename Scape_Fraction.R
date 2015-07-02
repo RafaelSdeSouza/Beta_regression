@@ -1,5 +1,18 @@
-# Bayesian  Logistic Regression using JAGS
+#  JAGS script  Scape_Fraction.R
+#  Copyright (C) 2015  Rafael S. de Souza
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License version 3 as published by
+#the Free Software Foundation.
 
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+#
 #  Required libraries
 library(rjags)
 library(ggmcmc)
@@ -22,7 +35,12 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "spin","age_star_mean","age_star_max","age_star_min")
 
 data.2<-data.1[data.1$redshift==15.20530,]
-data.3<-data.2[data.2$fEsc>0,]
+N<-nrow(data.2)
+
+data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
+
+
+#
 
 jags.data <- list(Y= data.3$fEsc,
                   N = nrow(data.3),
@@ -85,5 +103,20 @@ predscape<-summary(as.mcmc.list(jags.logit, vars="prediction"))
 predscape<-predscape$quantiles
 
 
-plot(x,predscape[,3])
+plot(data.3$fEsc,predscape[,3])
 plot(x,data.3$fEsc)
+
+
+
+data("AlcoholUse", package = "zoib")
+AlcoholUse$Grade = as.factor(AlcoholUse$Grade)
+
+post.obj <- zoib(Percentage ~ Grade+Days+Gender|1|Grade+Days+Gender|1,
+                 data = AlcoholUse, random = 1, EUID= AlcoholUse$County,
+                 zero.inflation = TRUE,  one.inflation = FALSE, joint = FALSE, 
+                 n.iter=1000, n.thin=5)  
+post.sample <- post.obj$oripara 
+post.sample.c1<- post.sample[[1]][11:200,]
+post.sample.c2<- post.sample[[2]][11:200,]
+post.sample <- mcmc.list(as.mcmc(post.sample.c1),as.mcmc(post.sample.c2))
+summary(post.sample)
