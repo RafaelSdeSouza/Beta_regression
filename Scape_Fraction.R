@@ -27,15 +27,16 @@ library(plyr)
 require(gdata)
 require(runjags)
 require(gdata)
-#Read the already clean dataset
+#Read the  dataset
 
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
-                    "spin","age_star_mean","age_star_max","age_star_min")
+                    "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
 data.2<-data.1[data.1$redshift==8.86815,]
 N<-nrow(data.2)
+
 
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
 
@@ -43,34 +44,43 @@ data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
 # Prepare data for JAGS
 data.2$Mstar<-(data.2$Mstar-mean(data.2$Mstar))/sd(data.2$Mstar)
 data.2$Mgas<-(data.2$Mgas-mean(data.2$Mgas))/sd(data.2$Mgas)
+data.2$Mvir<-(data.2$Mvir-mean(data.2$Mvir))/sd(data.2$Mvir)
 data.2$sfr_gas<-(data.2$sfr_gas-mean(data.2$sfr_gas))/sd(data.2$sfr_gas)
 data.2$baryon_fraction<-(data.2$baryon_fraction-mean(data.2$baryon_fraction))/sd(data.2$baryon_fraction)
+data.2$QHI<-(data.2$QHI-mean(data.2$QHI))/sd(data.2$QHI)
+data.2$ssfr_gas<-(data.2$ssfr_gas-mean(data.2$ssfr_gas))/sd(data.2$ssfr_gas)
+data.2$age_star_mean<-(data.2$age_star_mean-mean(data.2$age_star_mean))/sd(data.2$age_star_mean)
+data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
+data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
 
-X<-model.matrix(~Mstar+Mgas+sfr_gas+baryon_fraction,data=data.2)
+
+X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10,data=data.2)
 # Scale
 
-K<-ncol(Xscale)
+K<-ncol(X)
 
 
 jags.data <- list(Y= data.2$Y,
                   N = nrow(data.2),
                   X=X,
                   b0 = rep(0,K),
-                  B0=diag(1e-4,K)
+                  B0=diag(1e-4,K),
+                  Npred = K
 )
 
 
 model<-"model{
-#1. Priors
-beta~dmnorm(b0[],B0[,])
-#num~dnorm(0,0.0016)
-#denom~dnorm(0,1)
-#sigma<-abs(num/denom)
-#tau<-1/(sigma*sigma)
-#numtheta~dnorm(0,0.0016)
-#denomtheta~dnorm(0,1)
-#theta<-abs(numtheta/denomtheta)
+#1. Priors 
+#beta~dmnorm(b0[],B0[,]) # Normal Priors
+# Jefreys priors for sparseness 
+for(j in 1:Npred)   {
+      lnTau[j] ~ dunif(-50, 50)   
+      TauM[j] <- exp(lnTau[j])
+      beta[j] ~ dnorm(0, TauM[j]) 
+      Ind[j] <- step(abs(beta[j]) - 0.05)
+}
+
 theta~dgamma(0.01,0.01)
 #2. Likelihood
 
@@ -98,7 +108,7 @@ Fit<-sum(D[1:N])
 newFit<-sum(DNew[1:N])
 }"
 
-params <- c("beta","theta","PRes","Fit","newFit","newY")
+params <- c("beta","theta","PRes","Fit","newFit","newY","Ind")
 
 inits0  <- function () {
   list(beta  = rnorm(K, 0, 0.01)  #Regression parameters
@@ -116,7 +126,7 @@ jags.logit <- run.jags(method="rjparallel",
                        inits = list(inits1,inits2,inits3),
                        model=model,
                        n.chains = 3,
-                       adapt=1500,
+                       adapt=1000,
                        monitor=c(params),
                        burnin=1000,
                        sample=5000,
@@ -129,8 +139,8 @@ summary<-extend.jags(jags.logit,drop.monitor=c("PRes","Fit","newFit","newY"), su
 print(summary)
 
 L.factors <- data.frame(
-  Parameter=paste("beta[", seq(1:5), "]", sep=""),
-  Label=c("(Intercept)","Mstar","Mgas","sfr_gas","baryon_fraction"))
+  Parameter=paste("beta[", seq(1:6), "]", sep=""),
+  Label=c("(Intercept)","Mvir","baryon_fraction","age_star_mean","ssfr_gas","NH_10"))
 beta_post<-ggs(jagssamples,par_labels=L.factors,family=c("beta"))
 
 pdf("beta_scape.pdf")
@@ -154,12 +164,13 @@ Dispersion = sum(Pres^2)/(N-6)# beta.0, beta.1 and k, 3 parameters
 
 
 # Diagnostics Confusion Matrix (very unlikely to be good)
-predscape<-summary(as.mcmc.list(jags.logit, vars="prediction"))
+predscape<-summary(as.mcmc.list(jags.logit, vars="newY"))
 predscape<-predscape$quantiles
 
 
-plot(data.3$fEsc,predscape[,3])
-plot(x,data.3$fEsc)
+plot(data.2$fEsc,predscape[,3])
+plot(data.2$baryon_fraction,predscape[,3])
+plot(log(data.2$baryon_fraction,10),data.2$fEsc)
 
 
 
