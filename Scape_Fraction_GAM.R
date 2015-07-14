@@ -56,9 +56,16 @@ data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
 # Random effects with redshift
 
-re<-data.2$redshift
+re<-as.numeric(as.factor(data.2$redshift))
 Nredshift<-length(unique(data.2$redshift))
 
+
+
+#inla.m<-inla(Y~baryon_fraction+f(redshift,model="ar1"),data=data.2,family="beta",control.predictor = list(compute = TRUE),control.compute = list(config=TRUE))
+#inla.m$summary.fitted.values$mean
+
+
+#inla.m$summary.fitted.values$mean
 # GAM 
 library(splines)
 df<-3
@@ -102,7 +109,12 @@ sigma~dgamma(0.01,0.01)
 #}
 
 theta~dgamma(0.01,0.01)
+
+# AR(1) model
+
+
 #2. Likelihood
+
 
 for(i in 1:N){
 
@@ -208,4 +220,21 @@ ggplot(data.2,aes(x=baryon_fraction,y=fEsc))+
   xlab(expression(f[gas]))+theme(axis.title.y=element_text(vjust=0.75),
                                                 axis.title.x=element_text(vjust=-0.25),
                                                 text = element_text(size=25))
+dev.off()
+
+
+inla.m$summary.fitted.values$`0.975quant`
+pred2<-data.frame(f_gas=data.2$baryon_fraction,mean=inla.m$summary.fitted.values$mean,lwr1=inla.m$summary.fitted.values$`0.025quant`,upr1=inla.m$summary.fitted.values$`0.975quant`)
+
+CairoPDF("f_scape_all.pdf",height=8,width=9)
+ggplot(data.2,aes(x=baryon_fraction,y=fEsc))+
+  geom_ribbon(data=pred2,aes(x=f_gas,y=mean,ymin=lwr1, ymax=upr1), alpha=0.45, fill="gray") +
+  geom_point(size=0.75,alpha=0.7)+
+  geom_line(data=pred2,aes(x=f_gas,y=mean),colour="gray25",linetype="dashed",size=1.2)+
+  scale_colour_gdocs()+
+  theme_hc()+
+  ylab(expression(f[scape]))+
+  xlab(expression(f[gas]))+theme(axis.title.y=element_text(vjust=0.75),
+                                 axis.title.x=element_text(vjust=-0.25),
+                                 text = element_text(size=25))
 dev.off()

@@ -34,7 +34,8 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
-data.2<-data.1[data.1$redshift==8.86815,]
+#data.2<-data.1[data.1$redshift==8.86815,]
+data.2<-data.1
 N<-nrow(data.2)
 
 
@@ -55,7 +56,7 @@ data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
 
 
-X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10,data=data.2)
+X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10+redshift,data=data.2)
 # Scale
 
 K<-ncol(X)
@@ -120,7 +121,7 @@ inits2=inits0()
 inits3=inits0()
 
 library(parallel)
-cl <- makeCluster(3)
+cl <- makeCluster(6)
 jags.logit <- run.jags(method="rjparallel", 
                        data = jags.data, 
                        inits = list(inits1,inits2,inits3),
@@ -128,8 +129,8 @@ jags.logit <- run.jags(method="rjparallel",
                        n.chains = 3,
                        adapt=1000,
                        monitor=c(params),
-                       burnin=1000,
-                       sample=5000,
+                       burnin=10,
+                       sample=50,
                        summarise=FALSE,
                        plots=FALSE
 )
