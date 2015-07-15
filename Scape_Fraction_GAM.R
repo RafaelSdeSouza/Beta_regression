@@ -74,7 +74,7 @@ Nredshift<-length(unique(data.2$redshift))
 #inla.m$summary.fitted.values$mean
 # GAM 
 library(splines)
-df<-3
+df<-4
 X.bs <- bs(data.2$baryon_fraction, df = df,
            intercept = FALSE)
 
@@ -216,7 +216,7 @@ predscape<-predscape$quantiles
 
 
 plot(data.2$fEsc,predscape[,3])
-plot(data.2$baryon_fraction,predscape[,5])
+plot(data.2$baryon_fraction,predscape[,3])
 plot(data.2$baryon_fraction,data.2$fEsc)
 
 pred2<-data.frame(f_gas=data.2$baryon_fraction,mean=predscape[,4],lwr1=predscape[,1],lwr2=predscape[,2],
@@ -237,6 +237,19 @@ ggplot(data.2,aes(x=baryon_fraction,y=fEsc))+
                                                 text = element_text(size=25))
 dev.off()
 
+
+ggplot(data.2,aes(x=baryon_fraction,y=fEsc))+
+  geom_point(data=pred2,aes(x=f_gas,y=mean), alpha=0.45, fill="gray") +
+  geom_ribbon(data=pred2,aes(x=f_gas,y=mean,ymin=lwr2, ymax=upr2), alpha=0.35, fill="gray") +
+  geom_ribbon(data=pred2,aes(x=f_gas,y=mean,ymin=lwr3, ymax=upr3), alpha=0.25, fill="gray") +
+  geom_point(size=0.75,alpha=0.7)+
+  geom_line(data=pred2,aes(x=f_gas,y=mean),colour="gray25",linetype="dashed",size=1.2)+
+  scale_colour_gdocs()+
+  theme_hc()+
+  ylab(expression(f[scape]))+
+  xlab(expression(f[gas]))+theme(axis.title.y=element_text(vjust=0.75),
+                                 axis.title.x=element_text(vjust=-0.25),
+                                 text = element_text(size=25))
 
 inla.m$summary.fitted.values$`0.975quant`
 pred2<-data.frame(f_gas=data.2$baryon_fraction,mean=inla.m$summary.fitted.values$mean,lwr1=inla.m$summary.fitted.values$`0.025quant`,upr1=inla.m$summary.fitted.values$`0.975quant`)
