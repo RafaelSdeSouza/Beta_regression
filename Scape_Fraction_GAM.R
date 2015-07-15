@@ -27,15 +27,21 @@ library(plyr)
 require(gdata)
 require(runjags)
 require(gdata)
+require(caret)
 #Read the  dataset
+
 
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
+
+trainIndex <- createDataPartition(data.1$redshift, p = .1,
+                                  list = FALSE,
+                                  times = 1)
 #data.2<-data.1[data.1$redshift==8.86815,]
-data.2<-data.1
+data.2<-data.1[trainIndex,]
 N<-nrow(data.2)
 
 
@@ -87,9 +93,10 @@ jags.data <- list(Y= data.2$Y,
                   B0=diag(1e-4,K),
                   a0=rep(0,df),
                   A0=diag(1e-4,df),
-                  c0=rep(0,Nredshift),
-                  C0=diag(1,Nredshift),
-                  Npred = K
+#                  c0=rep(0,Nredshift),
+#                  C0=diag(1,Nredshift),
+                  Npred = K,
+                  Nredshift = Nredshift
 )
 
 
@@ -97,9 +104,14 @@ model<-"model{
 #1. Priors 
 beta~dmnorm(b0[],B0[,]) # Normal Priors
 b~dmnorm(a0[],A0[,]) # Normal Priors
-c~dmnorm(c0[],tau*C0[,])
-tau<-1/(sigma*sigma)
+#c~dmnorm(c0[],tau*C0[,])
+#tau<-1/(sigma*sigma)
 sigma~dgamma(0.01,0.01)
+
+tau.R<-pow(sdBeta,-1)
+sdBeta ~ dgamma(0.01,0.01)
+
+
 # Jefreys priors for sparseness 
 #for(j in 1:Npred)   {
 #lnTau[j] ~ dunif(-50, 50)   
@@ -111,7 +123,10 @@ sigma~dgamma(0.01,0.01)
 theta~dgamma(0.01,0.01)
 
 # AR(1) model
+for (j in 1:Nredshift){
 
+ranef[j]~ddexp(0,tau.R)
+}
 
 #2. Likelihood
 
@@ -122,7 +137,7 @@ Y[i] ~ dbeta(shape1[i],shape2[i])
 shape1[i]<-theta*pi[i]
 shape2[i]<-theta*(1-pi[i])
 logit(pi[i]) <- eta[i]
-eta[i]<-inprod(beta[],X[i,])+inprod(b[],X.bs[i,])+c[re[i]]
+eta[i]<-inprod(beta[],X[i,])+inprod(b[],X.bs[i,])+ranef[re[i]]
 ExpY[i]<-pi[i]
 VarY[i]<-pi[i]*(1-pi[i])/(theta+1)
 PRes[i]<-(Y[i]-ExpY[i])/sqrt(VarY[i])
@@ -152,16 +167,16 @@ inits2=inits0()
 inits3=inits0()
 
 library(parallel)
-cl <- makeCluster(3)
+cl <- makeCluster(6)
 jags.logit <- run.jags(method="rjparallel", 
                        data = jags.data, 
                        inits = list(inits1,inits2,inits3),
                        model=model,
                        n.chains = 3,
-                       adapt=10,
+                       adapt=1000,
                        monitor=c(params),
-                       burnin=100,
-                       sample=500,
+                       burnin=1000,
+                       sample=5000,
                        summarise=FALSE,
                        plots=TRUE
 )
