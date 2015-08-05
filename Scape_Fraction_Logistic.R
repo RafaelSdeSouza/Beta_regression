@@ -48,8 +48,8 @@ N<-nrow(data.2)
 
 
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
-data.2$Y[data.2$Y>=0.5]<-1
-data.2$Y[data.2$Y<0.5]<-0
+data.2$Y[data.2$Y>=0.1]<-1
+data.2$Y[data.2$Y<0.1]<-0
 #data.2$Y<-as.factor(data.2$Y)
 
 
