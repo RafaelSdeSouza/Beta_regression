@@ -29,6 +29,8 @@ require(runjags)
 require(gdata)
 require(caret)
 require(pROC)
+require(plyr)
+
 #Read the  dataset
 
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
@@ -45,6 +47,7 @@ data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
 N<-nrow(data.2)
+
 
 
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
@@ -69,7 +72,7 @@ data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
 #X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10+redshift,data=data.2)
 
-X<-model.matrix(~baryon_fraction+Mgas+NH_10,data=data.2)
+X<-model.matrix(~QHI,data=data.2)
 # Scale
 
 K<-ncol(X)
