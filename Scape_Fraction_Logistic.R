@@ -39,7 +39,7 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
 
-trainIndex <- createDataPartition(data.1$redshift, p = .3,
+trainIndex <- createDataPartition(data.1$redshift, p = .9,
                                   list = FALSE,
                                   times = 1)
 #data.2<-data.1[data.1$redshift==8.86815,]
@@ -89,14 +89,14 @@ jags.data <- list(Y= data.2$Y,
 
 model<-"model{
 #1. Priors 
-#beta~dmnorm(b0[],B0[,]) # Normal Priors
+beta~dmnorm(b0[],B0[,]) # Normal Priors
 # Jefreys priors for sparseness 
-for(j in 1:Npred)   {
-      lnTau[j] ~ dunif(-50, 50)   
-      TauM[j] <- exp(lnTau[j])
-      beta[j] ~ dnorm(0, TauM[j]) 
-     Ind[j] <- step(abs(beta[j]) - 0.05)
-}
+#for(j in 1:Npred)   {
+#      lnTau[j] ~ dunif(-50, 50)   
+#      TauM[j] <- exp(lnTau[j])
+#      beta[j] ~ dnorm(0, TauM[j]) 
+#     Ind[j] <- step(abs(beta[j]) - 0.05)
+#}
 
 #2. Likelihood
 
@@ -190,3 +190,9 @@ plot(log(data.2$baryon_fraction,10),data.2$fEsc)
 
 
 
+fit=glm(Y~QHI,data=data.2,family=binomial)
+gdata<-data.frame(pi=predict(fit,type="resp"),x=data.2$QHI,y=data.2$Y)
+ggplot(gdata,aes(x=x,y=pi))+geom_line()+geom_point(data=gdata,aes(x=x,y=y))
+
+library(popbio)
+logi.hist.plot(data.2$ssfr_gas,data.2$Y,boxp=F,type="hist",counts = T,col="gray",xlabel = expression(sSFR[gas]),ylabel="Probability")
