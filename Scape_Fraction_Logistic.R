@@ -39,10 +39,10 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
 
-trainIndex <- createDataPartition(data.1$redshift, p = .9,
-                                  list = FALSE,
-                                  times = 1)
-#data.2<-data.1[data.1$redshift==8.86815,]
+#trainIndex <- createDataPartition(data.1$redshift, p = .25,
+#                                  list = FALSE,
+#                                  times = 1)
+data.2<-data.1[data.1$redshift<=8,]
 data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
@@ -190,9 +190,15 @@ plot(log(data.2$baryon_fraction,10),data.2$fEsc)
 
 
 
-fit=glm(Y~QHI,data=data.2,family=binomial)
+fit=glm(Y~QHI+baryon_fraction,data=data.2,family=binomial("logit"))
 gdata<-data.frame(pi=predict(fit,type="resp"),x=data.2$QHI,y=data.2$Y)
 ggplot(gdata,aes(x=x,y=pi))+geom_line()+geom_point(data=gdata,aes(x=x,y=y))
 
+
+
 library(popbio)
-logi.hist.plot(data.2$ssfr_gas,data.2$Y,boxp=F,type="hist",counts = T,col="gray",xlabel = expression(sSFR[gas]),ylabel="Probability")
+logi.hist.plot(data.2$baryon_fraction ,data.2$Y,boxp=F,type="hist",counts = T,col="gray",xlabel = expression(f[gas]),ylabel="Probability")
+
+d1 <- genLogiDt(model=FALSE)
+f1 <- glm(y ~ I(x5^2)*x1 -1, family=binomial("logit"), data=d1)
+logiDx(f1)
