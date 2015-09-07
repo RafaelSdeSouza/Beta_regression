@@ -67,8 +67,13 @@ fit2=glm(Y~sfr_gas,data=data.2,family=binomial("logit"))
 ROCtest(fit2,10,"ROC")
 
 
-formula = Y~QHI+baryon_fraction
-mod.surg = inla(formula,data=data.2,family="binomial")
+formula1 = Y~QHI+baryon_fraction+f(redshift,model="ar1")
+mod.1 = inla(formula1,data=data.2,family="binomial")
+
+formula2 = Y~QHI+baryon_fraction
+mod.2 = inla(formula2,data=data.2,family="binomial")
+
+
 plot(mod.surg)
 hyper = inla.hyperpar(mod.surg)
 summary(hyper)
@@ -82,4 +87,4 @@ ggplot(mydata) +
   geom_line(aes(ID, `0.025quant`), linetype="dashed") +   
   geom_line(aes(ID, `0.975quant`), linetype="dashed")
 
-
+model.mcmc = MCMClogit(Y~QHI+baryon_fraction,data=data.2,, mcmc=5000)
