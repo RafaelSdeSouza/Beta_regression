@@ -16,6 +16,7 @@ require(caret)
 require(pROC)
 require(plyr)
 require(LOGIT)
+require(usdm)
 
 #Read the  dataset
 
@@ -53,11 +54,28 @@ data.2$ssfr_gas<-(data.2$ssfr_gas-mean(data.2$ssfr_gas))/sd(data.2$ssfr_gas)
 data.2$age_star_mean<-(data.2$age_star_mean-mean(data.2$age_star_mean))/sd(data.2$age_star_mean)
 data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
 data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
+data.2$sfr_stars<-(data.2$sfr_stars-mean(data.2$sfr_stars))/sd(data.2$sfr_stars)
+
+x<-as.matrix(data.2[,c("Mvir","sfr_gas","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
+vifcor(x,th=0.75)
+#fit=glm(Y~QHI+baryon_fraction+redshift,data=data.2,family=binomial("probit"))
+
+fit<-glmnet(x,y=data.2$Y,alpha=1,family="binomial")
 
 
-fit=glm(Y~QHI+baryon_fraction+redshift,data=data.2,family=binomial("probit"))
+plot(fit,xvar="lambda",label = TRUE)
+plot(fit, xvar = "dev", label = TRUE)
+cv.glmmod <- cv.glmnet(x,y=data.2$Y,alpha=1,family="binomial",type.measure = "class")
+plot(cv.glmmod)
+best_lambda <- cv.glmmod$lambda.min
+
+coef.min = coef(cv.glmmod, s = "lambda.min")
+active.min = coef.min[which(abs(coef.min) > 0.1)]
+index.min = coef.min[active.min]
 
 
+
+fit=glm(Y~Mstar+Mvir,data=data.2,family=binomial("probit"))
 ROCtest(fit,10,"ROC")
 
 
