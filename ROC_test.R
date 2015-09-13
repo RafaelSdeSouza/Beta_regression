@@ -29,7 +29,7 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
 #                                  times = 1)
-data.2<-data.1[data.1$redshift<=10,]
+data.2<-data.1[data.1$redshift<=12,]
 data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
@@ -42,6 +42,10 @@ data.2$Y[data.2$Y>=0.1]<-1
 data.2$Y[data.2$Y<0.1]<-0
 #data.2$Y<-as.factor(data.2$Y)
 
+vifcor(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")],th=0.7)
+x<-data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")]
+cor<-Corr_MIC(x,"pearson")
+plotgraph(cor)
 
 # Prepare data for JAGS
 data.2$Mstar<-(data.2$Mstar-mean(data.2$Mstar))/sd(data.2$Mstar)
@@ -56,16 +60,16 @@ data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
 data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 data.2$sfr_stars<-(data.2$sfr_stars-mean(data.2$sfr_stars))/sd(data.2$sfr_stars)
 
-x<-as.matrix(data.2[,c("Mvir","sfr_gas","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
-vifcor(x,th=0.75)
+x2<-as.matrix(data.2[,c("redshift","Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
+
 #fit=glm(Y~QHI+baryon_fraction+redshift,data=data.2,family=binomial("probit"))
 
-fit<-glmnet(x,y=data.2$Y,alpha=1,family="binomial")
+fit<-glmnet(x2,y=data.2$Y,alpha=1,family="binomial")
 
 
 plot(fit,xvar="lambda",label = TRUE)
 plot(fit, xvar = "dev", label = TRUE)
-cv.glmmod <- cv.glmnet(x,y=data.2$Y,alpha=1,family="binomial",type.measure = "class")
+cv.glmmod <- cv.glmnet(x2,y=data.2$Y,alpha=1,family="binomial",type.measure = "auc")
 plot(cv.glmmod)
 best_lambda <- cv.glmmod$lambda.min
 
@@ -75,7 +79,7 @@ index.min = coef.min[active.min]
 
 
 
-fit=glm(Y~Mstar+Mvir,data=data.2,family=binomial("probit"))
+fit=glm(Y~redshift+Mstar+Mvir,data=data.2,family=binomial("probit"))
 ROCtest(fit,10,"ROC")
 
 
