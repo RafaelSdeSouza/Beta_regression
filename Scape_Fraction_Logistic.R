@@ -42,8 +42,8 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
 #                                  times = 1)
-data.2<-data.1[data.1$redshift<=8,]
-data.2<-data.1[trainIndex,]
+data.2<-data.1[data.1$redshift<=10,]
+#data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
 N<-nrow(data.2)
@@ -54,6 +54,9 @@ data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
 data.2$Y[data.2$Y>=0.1]<-1
 data.2$Y[data.2$Y<0.1]<-0
 #data.2$Y<-as.factor(data.2$Y)
+
+# Remove collinearity 
+
 
 
 # Prepare data for JAGS
@@ -71,8 +74,7 @@ data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
 
 #X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10+redshift,data=data.2)
-
-X<-model.matrix(~QHI,data=data.2)
+X<-model.matrix(~baryon_fraction+QHI,data=data.2)
 # Scale
 
 K<-ncol(X)
@@ -89,14 +91,14 @@ jags.data <- list(Y= data.2$Y,
 
 model<-"model{
 #1. Priors 
-beta~dmnorm(b0[],B0[,]) # Normal Priors
+#beta~dmnorm(b0[],B0[,]) # Normal Priors
 # Jefreys priors for sparseness 
-#for(j in 1:Npred)   {
-#      lnTau[j] ~ dunif(-50, 50)   
-#      TauM[j] <- exp(lnTau[j])
-#      beta[j] ~ dnorm(0, TauM[j]) 
-#     Ind[j] <- step(abs(beta[j]) - 0.05)
-#}
+for(j in 1:Npred)   {
+      lnTau[j] ~ dunif(-50, 50)   
+      TauM[j] <- exp(lnTau[j])
+     beta[j] ~ dnorm(0, TauM[j]) 
+    Ind[j] <- step(abs(beta[j]) - 0.05)
+}
 
 #2. Likelihood
 
@@ -108,14 +110,11 @@ eta[i] <- inprod(beta[], X[i,])
 
 #3. Prediction
 NewPred[i]~dbern(pi[i])
-
-
-
 }
 
 }"
 
-params <- c("beta","pi","NewPred")
+params <- c("beta","pi","Ind","NewPred")
 
 inits0  <- function () {
   list(beta = rnorm(K, 0, 0.1))}
@@ -127,7 +126,7 @@ inits2=inits0()
 inits3=inits0()
 
 library(parallel)
-cl <- makeCluster(6)
+cl <- makeCluster(3)
 jags.logit <- run.jags(method="rjparallel", 
                        data = jags.data, 
                        inits = list(inits1,inits2,inits3),
@@ -135,7 +134,7 @@ jags.logit <- run.jags(method="rjparallel",
                        n.chains = 3,
                        adapt=1000,
                        monitor=c(params),
-                       burnin=1000,
+                       burnin=1500,
                        sample=5000,
                        summarise=FALSE,
                        plots=FALSE
@@ -143,11 +142,11 @@ jags.logit <- run.jags(method="rjparallel",
 
 jagssamples <- as.mcmc.list(jags.logit)
 #summary<-extend.jags(jags.logit,drop.monitor=c("pi","prediction"), summarise=TRUE)
-print(summary)
+#print(summary)
 
 L.factors <- data.frame(
-  Parameter=paste("beta[", seq(1:6), "]", sep=""),
-  Label=c("(Intercept)","Mvir","baryon_fraction","age_star_mean","ssfr_gas","NH_10"))
+  Parameter=paste("beta[", seq(1:5), "]", sep=""),
+  Label=c("(Intercept)","Mvir","baryon_fraction","age_star_mean","ssfr_gas"))
 beta_post<-ggs(jagssamples,par_labels=L.factors,family=c("beta"))
 
 pdf("beta_scape.pdf")
@@ -168,7 +167,7 @@ prediction<-prediction$quantiles
 probability<-summary(as.mcmc.list(jags.logit,vars="pi"))
 prob<-probability$quantiles
 
-ROC<-roc(prob[,3], data.2$Y)
+ROC<-roc(as.numeric(prob[,3]), data.2$Y)
 
 plot(ROC)
 require(mlearning)
@@ -191,13 +190,21 @@ plot(log(data.2$baryon_fraction,10),data.2$fEsc)
 
 
 fit=glm(Y~QHI+baryon_fraction,data=data.2,family=binomial("logit"))
+ROCtest(fit)
+
+hlGOF.test(data.2$Y, predict(fit,data.2, type="response"), breaks=12)
+ROC<-roc(predict(fit, type="response"), data.2$Y)
+ROC
+require(LOGIT)
+
+
 gdata<-data.frame(pi=predict(fit,type="resp"),x=data.2$QHI,y=data.2$Y)
 ggplot(gdata,aes(x=x,y=pi))+geom_line()+geom_point(data=gdata,aes(x=x,y=y))
 
 
 
 library(popbio)
-logi.hist.plot(data.2$baryon_fraction ,data.2$Y,boxp=F,type="hist",counts = T,col="gray",xlabel = expression(f[gas]),ylabel="Probability")
+logi.hist.plot(data.2$Mvir ,data.2$Y,boxp=F,type="hist",counts = T,col="gray",xlabel = expression(f[gas]),ylabel="Probability")
 
 d1 <- genLogiDt(model=FALSE)
 f1 <- glm(y ~ I(x5^2)*x1 -1, family=binomial("logit"), data=d1)

@@ -17,7 +17,10 @@ require(pROC)
 require(plyr)
 require(LOGIT)
 require(usdm)
-
+library(lme4)
+library(nlme)
+library(arm)
+require(gam)
 #Read the  dataset
 
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
@@ -79,13 +82,11 @@ index.min = coef.min[active.min]
 
 
 
-fit=glm(Y~redshift+Mstar+Mvir,data=data.2,family=binomial("probit"))
+fit=glm(Y~Mvir+baryon_fraction,data=data.2,family=binomial("probit"))
 ROCtest(fit,10,"ROC")
-
-
-fit2=glm(Y~sfr_gas,data=data.2,family=binomial("logit"))
-
-
+fit2=gam(Y~te(QHI,baryon_fraction),data=data.2,family=binomial("logit"))
+plot(fit2)
+vis.gam(fit2,type="response",plot.type = "persp",color="topo", border=NA, n.grid=500,theta=-60,phi=30)
 ROCtest(fit2,10,"ROC")
 
 
