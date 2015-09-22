@@ -21,6 +21,7 @@ library(lme4)
 library(nlme)
 library(arm)
 require(gam)
+require(glmnet)
 #Read the  dataset
 
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
@@ -33,7 +34,7 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 #                                  list = FALSE,
 #                                  times = 1)
 data.2<-data.1[data.1$redshift<=12,]
-data.2<-data.1[trainIndex,]
+#data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
 N<-nrow(data.2)
@@ -47,8 +48,8 @@ data.2$Y[data.2$Y<0.1]<-0
 
 vifcor(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")],th=0.7)
 x<-data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")]
-cor<-Corr_MIC(x,"pearson")
-plotgraph(cor)
+#cor<-Corr_MIC(x,"pearson")
+#plotgraph(cor)
 
 # Prepare data for JAGS
 data.2$Mstar<-(data.2$Mstar-mean(data.2$Mstar))/sd(data.2$Mstar)
@@ -69,6 +70,8 @@ x2<-as.matrix(data.2[,c("redshift","Mvir","baryon_fraction","ssfr_gas","age_star
 
 fit<-glmnet(x2,y=data.2$Y,alpha=1,family="binomial")
 
+p.coeff<-function(coeff){(exp(coeff)/(1+exp(coeff)))}
+
 
 plot(fit,xvar="lambda",label = TRUE)
 plot(fit, xvar = "dev", label = TRUE)
@@ -77,7 +80,7 @@ plot(cv.glmmod)
 best_lambda <- cv.glmmod$lambda.min
 
 coef.min = coef(cv.glmmod, s = "lambda.min")
-active.min = coef.min[which(abs(coef.min) > 0.1)]
+active.min = coef.min[which(abs(coef.min) > 0.05)]
 index.min = coef.min[active.min]
 
 
