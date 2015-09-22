@@ -64,12 +64,12 @@ data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
 data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 data.2$sfr_stars<-(data.2$sfr_stars-mean(data.2$sfr_stars))/sd(data.2$sfr_stars)
 
-x2<-as.matrix(data.2[,c("redshift","Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
+x2<-as.matrix(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
 
 #fit=glm(Y~QHI+baryon_fraction+redshift,data=data.2,family=binomial("probit"))
 
 fit<-glmnet(x2,y=data.2$Y,alpha=1,family="binomial")
-
+coef(fit)
 p.coeff<-function(coeff){(exp(coeff)/(1+exp(coeff)))}
 
 
