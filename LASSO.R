@@ -22,8 +22,11 @@ library(nlme)
 library(arm)
 require(gam)
 require(glmnet)
-#Read the  dataset
+require(AMADA)
 
+
+
+#Read the  dataset
 data.1= read.table(file="FiBY_escape_data_all.dat",header=FALSE)
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
@@ -33,7 +36,24 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
 #                                  times = 1)
-data.2<-data.1[data.1$redshift<=12,]
+data.2<-data.1[data.1$redshift<=20,]
+
+
+# Exploratory plot AMADA correlations 
+
+
+cor1<-Corr_MIC(data.2[,-2],method="pearson")
+plotdendrogram(cor1,type="p")
+
+
+vifcor(data.2[,c(-1,-2)],th=0.80)
+
+
+
+
+
+
+
 #data.2<-data.1[trainIndex,]
 #data.2<-data.1[data.1$redshift==8.86815,]
 #data.2<-data.1
@@ -42,20 +62,18 @@ N<-nrow(data.2)
 
 
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
-data.2$Y[data.2$Y>=0.1]<-1
-data.2$Y[data.2$Y<0.1]<-0
+data.2$Y[data.2$Y>=0.5]<-1
+data.2$Y[data.2$Y<0.5]<-0
 #data.2$Y<-as.factor(data.2$Y)
 
-vifcor(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")],th=0.7)
-x<-data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")]
-#cor<-Corr_MIC(x,"pearson")
-#plotgraph(cor)
 
-# Prepare data for JAGS
+
+# Prepare data 
 data.2$Mstar<-(data.2$Mstar-mean(data.2$Mstar))/sd(data.2$Mstar)
 data.2$Mgas<-(data.2$Mgas-mean(data.2$Mgas))/sd(data.2$Mgas)
 data.2$Mvir<-(data.2$Mvir-mean(data.2$Mvir))/sd(data.2$Mvir)
 data.2$sfr_gas<-(data.2$sfr_gas-mean(data.2$sfr_gas))/sd(data.2$sfr_gas)
+data.2$ssfr_stars<-(data.2$ssfr_stars-mean(data.2$ssfr_stars))/sd(data.2$ssfr_stars)
 data.2$baryon_fraction<-(data.2$baryon_fraction-mean(data.2$baryon_fraction))/sd(data.2$baryon_fraction)
 data.2$QHI<-(data.2$QHI-mean(data.2$QHI))/sd(data.2$QHI)
 data.2$ssfr_gas<-(data.2$ssfr_gas-mean(data.2$ssfr_gas))/sd(data.2$ssfr_gas)
@@ -63,8 +81,10 @@ data.2$age_star_mean<-(data.2$age_star_mean-mean(data.2$age_star_mean))/sd(data.
 data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
 data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 data.2$sfr_stars<-(data.2$sfr_stars-mean(data.2$sfr_stars))/sd(data.2$sfr_stars)
+data.2$age_star_max<-(data.2$age_star_max-mean(data.2$age_star_max))/sd(data.2$age_star_max)
+data.2$age_star_min<-(data.2$age_star_min-mean(data.2$age_star_min))/sd(data.2$age_star_min)
 
-x2<-as.matrix(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
+x2<-as.matrix(data.2[,c("Mstar","Mgas","ssfr_gas","ssfr_stars","baryon_fraction","spin","age_star_max","age_star_min","NH_10")])
 
 fit<-glmnet(x2,y=data.2$Y,alpha=1,family="binomial")
 plot(fit,xvar="lambda",label = TRUE)
@@ -89,12 +109,12 @@ ROCtest(fit2,10,"ROC")
 formula1 = Y~QHI+baryon_fraction+f(redshift,model="ar1")
 mod.1 = inla(formula1,data=data.2,family="binomial")
 
-formula2 = Y~Mvir+baryon_fraction+ssfr_gas+age_star_mean+spin
-mod.2 = inla(formula2,data=data.2,family="binomial")
+formula2 = Y~Mstar+Mgas+ssfr_gas+ssfr_stars+baryon_fraction+spin+age_star_max+age_star_min+NH_10
+mod.2 = inla(formula2,data=data.2[,c(-1,-2)],family="binomial")
 
 
-plot(mod.surg)
-hyper = inla.hyperpar(mod.surg)
+plot(mod.2)
+hyper = inla.hyperpar(mod.2)
 summary(hyper)
 plot(hyper)
 
