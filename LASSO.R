@@ -66,19 +66,12 @@ data.2$sfr_stars<-(data.2$sfr_stars-mean(data.2$sfr_stars))/sd(data.2$sfr_stars)
 
 x2<-as.matrix(data.2[,c("Mvir","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10")])
 
-#fit=glm(Y~QHI+baryon_fraction+redshift,data=data.2,family=binomial("probit"))
-
 fit<-glmnet(x2,y=data.2$Y,alpha=1,family="binomial")
-coef(fit)
-p.coeff<-function(coeff){(exp(coeff)/(1+exp(coeff)))}
-
-
 plot(fit,xvar="lambda",label = TRUE)
 plot(fit, xvar = "dev", label = TRUE)
 cv.glmmod <- cv.glmnet(x2,y=data.2$Y,alpha=1,family="binomial",type.measure = "auc")
 plot(cv.glmmod)
 best_lambda <- cv.glmmod$lambda.min
-
 coef.min = coef(cv.glmmod, s = "lambda.min")
 active.min = coef.min[which(abs(coef.min) > 0.05)]
 index.min = coef.min[active.min]
@@ -96,7 +89,7 @@ ROCtest(fit2,10,"ROC")
 formula1 = Y~QHI+baryon_fraction+f(redshift,model="ar1")
 mod.1 = inla(formula1,data=data.2,family="binomial")
 
-formula2 = Y~QHI+baryon_fraction
+formula2 = Y~Mvir+baryon_fraction+ssfr_gas+age_star_mean+spin
 mod.2 = inla(formula2,data=data.2,family="binomial")
 
 
