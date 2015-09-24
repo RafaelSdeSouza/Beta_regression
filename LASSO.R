@@ -81,19 +81,66 @@ cv.glmmod <- cv.glmnet(x2,y=data.3$Y,alpha=1,family="binomial",type.measure = "a
 plot(cv.glmmod,xlab=expression(log~lambda),family="serif")
 
 
-best_lambda <- cv.glmmod$lambda.min
+best_lambda <- cv.glmmod$lambda.1se
+
 coef.min = coef(cv.glmmod, s = "lambda.1se")
 coef.min
 
+# Set only 2 most importants by hand 
+
+coef.2 = coef(cv.glmmod, s = 0.0110300)
+coef.2
 
 
 # Fit GLM with selected features
 
 
 
-fit=glm(Y~Mgas +ssfr_stars+age_star_min ,data=data.2,family=binomial("probit"))
+fit=glm(Y~Mvir,data=data.3,family=binomial("logit"))
 ROCtest(fit,10,"ROC")
-fit2=gam(Y~te(Mgas,ssfr_stars),data=data.2,family=binomial("logit"))
+
+
+# Plot 3D
+# Plot 
+
+x <-range(data.2$ssfr_stars)
+x <- seq(x[1], 0.15*x[2], length.out=50)
+y <- range(data.2$Mgas)
+y <- seq(0.5*y[1], 1.25*y[2], length.out=50)
+
+z <- outer(x,y,
+           function(ssfr_stars,Mgas)
+             predict(fit, data.frame(ssfr_stars,Mgas),type = 'response'))
+library(rsm)
+library(lattice)
+YlOrBr <- c("#00A3DB")
+#p<-persp(x,y,z, theta=150, phi=20,
+#         expand = 0.5,shade = 0.1,
+#         xlab="Z", ylab=expression(NII.Ha), zlab=expression(log10.EW.Ha),ticktype='detailed',
+#         col = YlOrBr,border=NA,xlog=T,ylog=T)
+cairo_pdf("logit3D.pdf")
+trellis.par.set("axis.line",list(axis.text=list(cex=20),col=NA,lty=1,lwd=2))
+par(mar=c(1,1,1,1))
+wireframe(z~x+y,data=data.frame(x=x, y=rep(y, each=length(x)), z=z),
+          par.settings = list(regions=list(alpha=0.6)),
+          col.regions =YlOrBr,drape=T,light.source = c(5,5,5),colorkey = FALSE,
+          ylab=list(label=expression(log~M[gas]/M['\u0298']),cex=1.25),
+          xlab=list(label=expression(sSFR[stars]/Gyr),cex=1.25),
+          zlab=list(rot=90,label=expression(P[f[scape]]>=0.1),cex=1.25,dist=-1,rot=0),
+          scale=list(tck=0.75,arrows=FALSE,distance =c(0.75, 0.75, 0.75)))
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+fit2=gam(Y~te(Mgas,ssfr_stars),data=data.3,family=binomial("logit"))
 plot(fit2)
 vis.gam(fit2,type="response",plot.type = "persp",color="topo", border=NA, n.grid=500,theta=-60,phi=30)
 ROCtest(fit2,10,"ROC")
@@ -102,8 +149,8 @@ ROCtest(fit2,10,"ROC")
 formula1 = Y~QHI+baryon_fraction+f(redshift,model="ar1")
 mod.1 = inla(formula1,data=data.2,family="binomial")
 
-formula2 = Y~Mstar+Mgas+ssfr_gas+ssfr_stars+baryon_fraction+spin+age_star_max+age_star_min+NH_10+f(redshift,model="ar1")
-mod.2 = inla(formula2,data=data.2,family="binomial")
+formula2 = Y~Mgas+ssfr_stars+f(redshift,model="ar1")
+mod.2 = inla(formula2,data=data.3,family="binomial")
 
 
 plot(mod.2)
@@ -112,7 +159,7 @@ summary(hyper)
 plot(hyper)
 
 
-mydata <- as.data.frame(mod.surg$marginals.fixed)
+mydata <- as.data.frame(mod.2$marginals.fixed)
 
 ggplot(mydata) +   
   geom_line(aes(ID, `0.5quant`)) +   
