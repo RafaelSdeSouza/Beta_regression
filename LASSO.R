@@ -36,7 +36,7 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
 #                                  times = 1)
-data.2<-data.1[data.1$redshift<=20,]
+data.2<-data.1[data.1$redshift<=15,]
 
 
 # Exploratory plot AMADA correlations 
@@ -109,8 +109,8 @@ ROCtest(fit2,10,"ROC")
 formula1 = Y~QHI+baryon_fraction+f(redshift,model="ar1")
 mod.1 = inla(formula1,data=data.2,family="binomial")
 
-formula2 = Y~Mstar+Mgas+ssfr_gas+ssfr_stars+baryon_fraction+spin+age_star_max+age_star_min+NH_10
-mod.2 = inla(formula2,data=data.2[,c(-1,-2)],family="binomial")
+formula2 = Y~Mstar+Mgas+ssfr_gas+ssfr_stars+baryon_fraction+spin+age_star_max+age_star_min+NH_10+f(redshift,model="ar1")
+mod.2 = inla(formula2,data=data.2,family="binomial")
 
 
 plot(mod.2)
