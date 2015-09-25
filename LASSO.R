@@ -78,8 +78,9 @@ plot(fit, xvar = "dev", label = TRUE)
 cv.glmmod <- cv.glmnet(x2,y=data.3$Y,alpha=1,family="binomial",type.measure = "auc")
 
 # Plot AUC vs Lambda
+CairoPDF("AUCvsLambda.pdf")
 plot(cv.glmmod,xlab=expression(log~lambda),family="serif")
-
+dev.off()
 
 best_lambda <- cv.glmmod$lambda.1se
 
@@ -96,7 +97,9 @@ coef.2
 
 
 
-fit=glm(Y~Mvir,data=data.3,family=binomial("logit"))
+fit=glm(Y~Mgas+ssfr_stars,data=data.3,family=binomial("logit"))
+
+
 ROCtest(fit,10,"ROC")
 
 
@@ -118,7 +121,7 @@ YlOrBr <- c("#00A3DB")
 #         expand = 0.5,shade = 0.1,
 #         xlab="Z", ylab=expression(NII.Ha), zlab=expression(log10.EW.Ha),ticktype='detailed',
 #         col = YlOrBr,border=NA,xlog=T,ylog=T)
-cairo_pdf("logit3D.pdf")
+cairo_pdf("logit3D.pdf",width = 9,height = 8)
 trellis.par.set("axis.line",list(axis.text=list(cex=20),col=NA,lty=1,lwd=2))
 par(mar=c(1,1,1,1))
 wireframe(z~x+y,data=data.frame(x=x, y=rep(y, each=length(x)), z=z),
