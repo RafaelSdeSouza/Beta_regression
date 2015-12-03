@@ -40,7 +40,7 @@ data.1$Mgas<-log(data.1$Mgas,10)
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
 #                                  times = 1)
-data.2<-data.1[data.1$redshift<=20,]
+data.2<-data.1[data.1$redshift<=25,]
 
 
 # Exploratory plot AMADA correlations 
