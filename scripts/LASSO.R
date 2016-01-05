@@ -1,6 +1,4 @@
 #  Required libraries
-library(rjags)
-library(ggmcmc)
 library(ggplot2)
 library(ggthemes)
 library(pander)
@@ -10,9 +8,7 @@ library(MASS)
 library(scales)
 library(plyr)
 require(gdata)
-require(runjags)
 require(gdata)
-require(caret)
 require(pROC)
 require(plyr)
 require(LOGIT)
@@ -22,10 +18,9 @@ library(nlme)
 library(arm)
 require(gam)
 require(glmnet)
-require(AMADA)
 require(mgcv)
 
-
+require(reshape2)
 
 #Read the  dataset
 data.1= read.table(file="..//data/FiBY_escape_data_all.dat",header=FALSE)
@@ -36,6 +31,8 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
 data.1$Mvir<-log(data.1$Mvir,10)
 data.1$Mstar<-log(data.1$Mstar,10)
 data.1$Mgas<-log(data.1$Mgas,10)
+data.1$fstar <- data.1$Mstar/data.1$Mgas
+
 
 #trainIndex <- createDataPartition(data.1$redshift, p = .25,
 #                                  list = FALSE,
@@ -76,7 +73,35 @@ x2<-as.matrix(data.3[,remain])
 
 fit<-glmnet(x2,y=data.3$Y,alpha=1,family="binomial")
 
+beta <- as.data.frame(as.matrix(t(coef(fit))),row.names = FALSE)
+lambda<-log(fit$lambda)
 
+path <- data.frame(Df=fit$df,lambda, beta[,-1])
+gpath<-melt(path,id=c("Df","lambda"))
+names(gpath) <- c("Df","lambda","variable","standardized.coef")
+labels<-c(expression(tau[min]),expression(f[gas]),"C",
+          expression(f["*"]),expression(M[200]),expression(NH[10]),
+          expression(sfr[gas]),expression(Lambda),
+          expression(ssfr[gas]),expression(paste(ssfr["*"])))
+
+library(ggplot2)
+p <- ggplot(gpath,aes(x=lambda,y=standardized.coef,colour=variable,
+                      linetype=variable))+
+  geom_line(aes(group=variable),size=1.5)+scale_color_tableau(name = "",labels=labels)+
+  scale_linetype_stata(name = "",labels=labels)+theme_bw()+xlab(expression(log(lambda)))+
+  coord_cartesian(xlim=c(-9.5,-2.25),ylim=c(-0.75,1.25))+
+  theme(legend.position="bottom",plot.title = element_text(hjust=0.5),
+        axis.title.y=element_text(vjust=0.75),axis.text.x=element_text(size=22),
+        axis.text.y=element_text(size=22),
+        strip.text.x=element_text(size=22),
+        axis.title.x=element_text(vjust=-0.25),
+        text = element_text(size=22),axis.title.x=element_text(size=rel(1)))+
+  guides(col = guide_legend(label.position = "left",ncol = 5, byrow = TRUE,keywidth = 3.25, keyheight = 1))+
+  ylab("Coefficients")
+ direct.label(p,"maxvar.qp")
+
+
+arclength <- rowSums(abs(beta))
 
 # Labels
 lbs_fun <- function(fit, ...) {
