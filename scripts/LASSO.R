@@ -1,17 +1,14 @@
 #  Required libraries
 library(ggplot2)
 library(ggthemes)
-library(pander)
 library(Cairo)
-library(plyr)
 library(MASS)
 library(scales)
 library(plyr)
 require(gdata)
-require(gdata)
 require(pROC)
 require(plyr)
-require(LOGIT)
+#require(LOGIT)
 require(usdm)
 library(lme4)
 library(nlme)
@@ -19,11 +16,12 @@ library(arm)
 require(gam)
 require(glmnet)
 require(mgcv)
+library(directlabels)
 
 require(reshape2)
 
 #Read the  dataset
-data.1= read.table(file="..//data/FiBY_escape_data_all.dat",header=FALSE)
+data.1 = read.table(file="..//data/FiBY_escape_data_all.dat",header=FALSE)
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10","clumping_factor")
@@ -32,33 +30,29 @@ data.1$Mvir<-log(data.1$Mvir,10)
 data.1$Mstar<-log(data.1$Mstar,10)
 data.1$Mgas<-log(data.1$Mgas,10)
 data.1$fstar <- data.1$Mstar/data.1$Mgas
-
-
-#trainIndex <- createDataPartition(data.1$redshift, p = .25,
-#                                  list = FALSE,
-#                                  times = 1)
 data.2<-data.1[data.1$redshift<=25,]
 
 
 # Exploratory plot AMADA correlations 
-
-
 #cor1<-Corr_MIC(data.2[,-2],method="pearson")
 #plotdendrogram(cor1,type="p")
 
-# remove collinearity 
+# Remove collinearity 
 
 VIF<-vifcor(data.2[,c(-1,-2)],th=0.7)
 remain<-levels(VIF@results$Variables)
 
-data.3<-as.data.frame(scale(data.2[,remain]))
 
-N<-nrow(data.2)
-data.3$Y<-(data.2$fEsc*(N-1)+0.5)/N
+
+#N<-nrow(data.2)
 
 # Reionization cutoff
 
-cut<-0.5
+cut<-0.1
+data.3<-as.data.frame(scale(data.2[,remain]))
+#data.3$Y<-(data.2$fEsc*(N-1)+0.5)/N
+data.3$Y<-data.2$fEsc
+
 
 data.3$Y[data.3$Y>=cut]<-1
 data.3$Y[data.3$Y<cut]<-0
@@ -67,12 +61,11 @@ data.3$Y[data.3$Y<cut]<-0
 
 # Fit LASSO binomial regression 
 
-
-
 x2<-as.matrix(data.3[,remain])
 
 fit<-glmnet(x2,y=data.3$Y,alpha=1,family="binomial")
 
+# Extract data for ggplot
 beta <- as.data.frame(as.matrix(t(coef(fit))),row.names = FALSE)
 lambda<-log(fit$lambda)
 
@@ -84,21 +77,31 @@ labels<-c(expression(tau[min]),expression(f[gas]),"C",
           expression(sfr[gas]),expression(Lambda),
           expression(ssfr[gas]),expression(paste(ssfr["*"])))
 
-library(ggplot2)
+
 p <- ggplot(gpath,aes(x=lambda,y=standardized.coef,colour=variable,
                       linetype=variable))+
   geom_line(aes(group=variable),size=1.5)+scale_color_tableau(name = "",labels=labels)+
-  scale_linetype_stata(name = "",labels=labels)+theme_bw()+xlab(expression(log(lambda)))+
-  coord_cartesian(xlim=c(-9.5,-2.25),ylim=c(-0.75,1.25))+
+  scale_linetype_stata(name = "",labels=labels)+
+  theme_bw()+xlab(expression(log(lambda)))+
+  coord_cartesian(ylim=c(-0.75,1.25))+
   theme(legend.position="bottom",plot.title = element_text(hjust=0.5),
         axis.title.y=element_text(vjust=0.75),axis.text.x=element_text(size=22),
         axis.text.y=element_text(size=22),
         strip.text.x=element_text(size=22),
         axis.title.x=element_text(vjust=-0.25),
         text = element_text(size=22),axis.title.x=element_text(size=rel(1)))+
-  guides(col = guide_legend(label.position = "left",ncol = 5, byrow = TRUE,keywidth = 3.25, keyheight = 1))+
+  guides(col = guide_legend(label.position = "left",ncol = 4, byrow = TRUE,keywidth = 4.5, keyheight = 1))+
   ylab("Coefficients")
- direct.label(p,"maxvar.qp")
+pdf("..//figures/LASSO01.pdf",height = 9 ,width = 10 )
+p
+dev.off()
+
+
+
+
+
+
+
 
 
 arclength <- rowSums(abs(beta))
