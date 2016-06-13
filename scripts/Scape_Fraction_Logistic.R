@@ -38,14 +38,7 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10")
 
-
-#trainIndex <- createDataPartition(data.1$redshift, p = .25,
-#                                  list = FALSE,
-#                                  times = 1)
 data.2<-data.1[data.1$redshift<=10,]
-#data.2<-data.1[trainIndex,]
-#data.2<-data.1[data.1$redshift==8.86815,]
-#data.2<-data.1
 N<-nrow(data.2)
 
 
@@ -53,10 +46,6 @@ N<-nrow(data.2)
 data.2$Y<-(data.2$fEsc*(N-1)+0.5)/N
 data.2$Y[data.2$Y>=0.1]<-1
 data.2$Y[data.2$Y<0.1]<-0
-#data.2$Y<-as.factor(data.2$Y)
-
-# Remove collinearity 
-
 
 
 # Prepare data for JAGS
@@ -71,12 +60,9 @@ data.2$age_star_mean<-(data.2$age_star_mean-mean(data.2$age_star_mean))/sd(data.
 data.2$spin<-(data.2$spin-mean(data.2$spin))/sd(data.2$spin)
 data.2$NH_10<-(data.2$NH_10-mean(data.2$NH_10))/sd(data.2$NH_10)
 
-
-
-#X<-model.matrix(~Mvir+baryon_fraction+age_star_mean+ssfr_gas+NH_10+redshift,data=data.2)
 X<-model.matrix(~baryon_fraction+QHI,data=data.2)
-# Scale
 
+# Scale
 K<-ncol(X)
 
 
