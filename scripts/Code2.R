@@ -1,6 +1,6 @@
 rm(list=ls(all=TRUE))
 library(caret);library(mgcv);library(ggplot2);library(e1071);library(corrplot);library(reshape)
-Data=read.table("..//data/FiBY_escape_data_all.dat.txt",header=F)
+Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
