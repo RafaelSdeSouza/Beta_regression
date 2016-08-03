@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(caret);library(mgcv);library(ggplot2);library(e1071);library(corrplot);library(reshape)
+library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -50,6 +50,10 @@ plot(M_non.zero,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMe
 gam.check(M_non.zero) # Residual analysis
 
 
+# Plot using visreg
+visreg(M_non.zero,ylab = expression(P[f[esc > 0]]),line=list(col="red"), points=list(cex=1, pch=1),
+       fill.par=list(col=c('gray90')))
+
 ### 2) Model Average y when y > 0. 
 ## Competing models     1) log normal (simple but can produce predicted values greater than 1)
 ##                      2) beta    (correct scale but more complicated) 
@@ -73,7 +77,7 @@ summary(M_Beta_y)
 plot(M_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
 gam.check(M_Beta_y) # Residual analysis
 
-
+visreg(M_Beta_y,"QHI",scale = "response",rug = 2,ylab = expression(f[esc])) # Plot using visreg
 
 # Gamma 
 M_Gamma_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
