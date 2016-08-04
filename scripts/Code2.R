@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape)
+library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -21,8 +21,13 @@ Xtrans      <- predict(trans,X) # The "new" Transformed X
 apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age_star_mean
 apply(Xtrans,2,function(x) skewness(x)) # Much Improved. 
 ## Check boxplots
-ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) + geom_boxplot()
-ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot()
+ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
+  geom_boxplot()+theme_hc()+xlab("")+
+  scale_x_discrete(labels=c(expression(M[star]),expression(M[gas]),
+ expression(M[200]),"SFR",expression(f[b]),"SSFR",expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]))) +
+  ylab("Original values")
+
+ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot()+theme_hc()+xlab("")
 
 ### Two Models: 1) Model the probability that y > 0. 2) Model the Average of Y if y > 0 
 ### Some graphics:
