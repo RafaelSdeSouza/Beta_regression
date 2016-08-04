@@ -4,10 +4,10 @@ Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
-                    "spin","age_star_mean","age_star_max","age_star_min","NH_10")
+                    "spin","age_star_mean","age_star_max","age_star_min","NH_10","C")
 data.2 = data.1[data.1$redshift<=10,]
 ## fEsc is the variable of interest
-Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10","QHI")])
+Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10","QHI","C")])
 X    <- as.matrix(Data)
 y    <- data.2$fEsc; 
 y[ y < 10^-2] = 0
