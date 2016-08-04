@@ -22,12 +22,29 @@ apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age
 apply(Xtrans,2,function(x) skewness(x)) # Much Improved. 
 ## Check boxplots
 ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
-  geom_boxplot()+theme_hc()+xlab("")+
+  geom_boxplot(fill="cyan3")+theme_hc()+xlab("")+
   scale_x_discrete(labels=c(expression(M[star]),expression(M[gas]),
  expression(M[200]),"SFR",expression(f[b]),"SSFR",expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]))) +
-  ylab("Original values")
+  ylab("Untransformed  values")+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
 
-ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot()+theme_hc()+xlab("")
+ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fill="cyan3")+theme_hc()+xlab("")+
+  scale_x_discrete(labels=c(expression(M[star]),expression(M[gas]),
+                            expression(M[200]),"SFR",expression(f[b]),"SSFR",expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]))) +
+  ylab("Transformed  values")+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
 
 ### Two Models: 1) Model the probability that y > 0. 2) Model the Average of Y if y > 0 
 ### Some graphics:
