@@ -82,8 +82,8 @@ gam.check(M_non.zero) # Residual analysis
 
 
 # Plot using visreg
-visreg(M_non.zero,ylab = expression(P[f[esc > 0]]),line=list(col="red"), points=list(cex=1, pch=1),
-       fill.par=list(col=c('gray90')))
+visreg(M_non.zero,"Mstar",ylab = expression(f[esc] > 0),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
+       fill.par=list(col=c('blue')),scale = "response",rug = 2,partial = TRUE)
 
 ### 2) Model Average y when y > 0. 
 ## Competing models     1) log normal (simple but can produce predicted values greater than 1)
