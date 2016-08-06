@@ -7,10 +7,10 @@ colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10","C")
 data.2 = data.1[data.1$redshift<=10,]
 ## fEsc is the variable of interest
-Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","baryon_fraction","ssfr_gas","age_star_mean","spin","NH_10","QHI","C")])
+Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","ssfr_gas","sfr_stars","ssfr_stars","baryon_fraction","age_star_mean","spin","NH_10","QHI","C")])
 X    <- as.matrix(Data)
 y    <- data.2$fEsc; 
-y[ y < 10^-2] = 0
+y[ y < 10^-3] = 0
 
 # Transform the columns of the design matrix (X)  to lighten the skewness, reduce the effect of outliers and reduce pairwise correlations if possible
 trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
@@ -22,9 +22,10 @@ apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age
 apply(Xtrans,2,function(x) skewness(x)) # Much Improved. 
 ## Check boxplots
 ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
-  geom_boxplot(fill="cyan3")+theme_hc()+xlab("")+
+  geom_boxplot(fill="#33a02c",outlier.size = 0.5,outlier.colour = "grey")+
+  theme_bw()+xlab("")+
   scale_x_discrete(labels=c(expression(M[star]),expression(M[gas]),
- expression(M[200]),"SFR",expression(f[b]),"SSFR",expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]))) +
+ expression(M[200]),expression(SFR[gas]),expression(SSFR[gas]),expression(SFR[star]),expression(SSFR[star]),expression(f[b]),expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]),"C")) +
   ylab("Untransformed  values")+
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
@@ -32,19 +33,25 @@ ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
         legend.position="top",
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
-        text = element_text(size = 20,family="serif"))
+        text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))
+# Print pdf
 
-ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fill="cyan3")+theme_hc()+xlab("")+
+#quartz.save(type = 'pdf', file = '../figures/box_raw.pdf',width = 9, height = 6)
+
+ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fill="#33a02c",outlier.size = 0.5,outlier.colour = "grey")+
+  theme_bw()+xlab("")+
   scale_x_discrete(labels=c(expression(M[star]),expression(M[gas]),
-                            expression(M[200]),"SFR",expression(f[b]),"SSFR",expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]))) +
+                            expression(M[200]),expression(SFR[gas]),expression(SSFR[gas]),expression(SFR[star]),expression(SSFR[star]),expression(f[b]),expression(tau),expression(lambda),expression(N[H]),expression(Q[HI]),"C")) +
   ylab("Transformed  values")+
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
         legend.position="top",
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
-        axis.title.x = element_text(vjust = -0.25),
-        text = element_text(size = 20,family="serif"))
+        axis.title.x = element_text(vjust = 0),
+        text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))
+
+#quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height = 6)
 
 ### Two Models: 1) Model the probability that y > 0. 2) Model the Average of Y if y > 0 
 ### Some graphics:
@@ -60,11 +67,13 @@ ggplot(d, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,a
 #### Modelling:
 #### Using Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0)
-mod_linear_nzero   <- gam(non.zero ~Mstar + Mgas + Mvir + sfr_gas + baryon_fraction + ssfr_gas + age_star_mean + spin + NH_10 + QHI, data = d, family = binomial(link = logit))
+mod_linear_nzero   <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = d, family = binomial(link = logit))
 r                  <- 30
 M_non.zero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)    + s(Mgas,bs="cr",k=r) + s(Mvir,bs="cr",k=r) + s(sfr_gas,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
                     s(ssfr_gas,bs="cr",k=r) + s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r) + s(NH_10,bs="cr",k=r) + s(QHI,bs="cr",k=r),
                     data=d,family=binomial(link="logit"))
+
+
 
 anova.gam(mod_linear_nzero,M_non.zero,test="Chisq") # Test the simple model against the more complicated one
 summary(M_non.zero)
