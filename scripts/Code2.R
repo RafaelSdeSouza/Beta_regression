@@ -10,7 +10,7 @@ data.2 = data.1[data.1$redshift<=10,]
 Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","ssfr_gas","sfr_stars","ssfr_stars","baryon_fraction","age_star_mean","spin","NH_10","QHI","C")])
 X    <- as.matrix(Data)
 y    <- data.2$fEsc; 
-y[ y < 10^-3] = 0
+y[ y < 10^-2] = 0
 
 # Transform the columns of the design matrix (X)  to lighten the skewness, reduce the effect of outliers and reduce pairwise correlations if possible
 trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
@@ -84,7 +84,7 @@ gam.check(M_non.zero) # Residual analysis
 
 # Plot using visreg
 visreg(M_non.zero,"Mstar",ylab = expression(f[esc] > 0),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
-       fill.par=list(col=c('blue')),scale = "response",rug = 2,partial = TRUE)
+       fill.par=list(col=c('blue')),scale = "response",rug = 2)
 
 ### 2) Model Average y when y > 0. 
 ## Competing models     1) log normal (simple but can produce predicted values greater than 1)
