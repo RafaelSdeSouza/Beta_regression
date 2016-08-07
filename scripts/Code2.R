@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes)
+library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -69,9 +69,10 @@ ggplot(d, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,a
 #### 1) Model Prob(y>0)
 mod_linear_nzero   <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = d, family = binomial(link = logit))
 r                  <- 30
-M_non.zero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)    + s(Mgas,bs="cr",k=r) + s(Mvir,bs="cr",k=r) + s(sfr_gas,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
-                    s(ssfr_gas,bs="cr",k=r) + s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r) + s(NH_10,bs="cr",k=r) + s(QHI,bs="cr",k=r),
-                    data=d,family=binomial(link="logit"))
+M_non.zero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)    + s(Mgas,bs="cr",k=r) + s(Mvir,bs="cr",k=r) + s(sfr_gas,bs="cr",k=r) + 
+                            s(ssfr_gas,bs="cr",k=r) + s(sfr_stars,bs="cr",k=r)+ s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
+                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r) + s(NH_10,bs="cr",k=r) + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
+                    data=d,family=binomial(link="logit"),method="REML",select=TRUE)
 
 
 
