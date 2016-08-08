@@ -36,7 +36,7 @@ ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
         text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))
 # Print pdf
 
-#quartz.save(type = 'pdf', file = '../figures/box_raw.pdf',width = 9, height = 6)
+quartz.save(type = 'pdf', file = '../figures/box_raw.pdf',width = 9, height = 6)
 
 ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fill="#33a02c",outlier.size = 0.5,outlier.colour = "grey")+
   theme_bw()+xlab("")+
@@ -51,7 +51,7 @@ ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fi
         axis.title.x = element_text(vjust = 0),
         text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))
 
-#quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height = 6)
+quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height = 6)
 
 ### Two Models: 1) Model the probability that y > 0. 2) Model the Average of Y if y > 0 
 ### Some graphics:
@@ -84,8 +84,18 @@ gam.check(M_non.zero) # Residual analysis
 
 # Plot using visreg
 
-visreg(M_non.zero,"C",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.25, pch=2,col="grey80"),
-       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2)
+visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
+
+#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
+
+#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
+
+
+quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
+
 
 
 ### 2) Model Average y when y > 0. 
@@ -93,8 +103,9 @@ visreg(M_non.zero,"C",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=lis
 ##                      2) beta    (correct scale but more complicated) 
 ##                      3) Gamma models (can handle skewness naturally)
 # Log normal
-M_L_y    <- gam(log(y) ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                s(ssfr_gas,bs="cr",k=100) + s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100),
+M_L_y    <- gam(log(y) ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
+                  s(ssfr_gas,bs="cr",k=100) +  s(sfr_stars,bs="cr",k=100)  + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
+                s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
                 subset=y>0,data=d,gamma=1.4)
 
 summary(M_L_y)
@@ -103,9 +114,10 @@ gam.check(M_L_y) # Residual analysis
 
 
 # Beta  
-M_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                    s(ssfr_gas,bs="cr",k=100) + s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100),
-                     subset=y>0,data=d,family=betar(link="logit"),gamma=1.4)
+M_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
+                  s(ssfr_gas,bs="cr",k=100) +  s(sfr_stars,bs="cr",k=100)  + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
+                  s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
+                  subset=y>0,data=d,family=betar(link="logit"),gamma=1.4)
 
 summary(M_Beta_y)
 plot(M_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
