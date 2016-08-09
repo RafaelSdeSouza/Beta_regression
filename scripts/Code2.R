@@ -169,7 +169,7 @@ visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),l
 #### Say at xp = X[c(100,363,987),] 
 xp= X[c(100,363,987),]; xp=as.data.frame(xp);colnames(xp) = colnames(X)
 xp.trans <- predict(trans,xp) # The "new" Transformed xp      
-# Find pr(y = 0) at xp 
+# Find pr(y > 0) at xp 
 predict(npar_nzero,newdata=xp.trans,type="response")
 # Predict the average of y at xp: 
 predict(npar_nzero,newdata=xp.trans,type="response")*predict(npar_Beta_y,newdata=xp.trans,type="response")
