@@ -144,7 +144,8 @@ summary(M_Beta_y)
 plot(M_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
 gam.check(M_Beta_y) # Residual analysis
 
-visreg(M_Beta_y,"QHI",scale = "response",rug = 2,ylab = expression(f[esc])) # Plot using visreg
+visreg(M_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
+       points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
 
 # Gamma 
 M_Gamma_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
