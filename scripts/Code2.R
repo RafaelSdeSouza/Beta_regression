@@ -64,9 +64,10 @@ ggplot(Dat.trans, aes(x=sfr_gas, y=y, colour = as.factor(non.zero))) + geom_poin
 ggplot(Dat.trans, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw() #  weird !
 
 ####
-#### Modelling:
-#### Using Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
-#### 1) Model Prob(y>0)
+#### Modelling using non-parametric hurdle regression model:
+#### Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
+#### 1) Model Prob(y>0) using nonparametric logistic regression
+
 simple_nzero       <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
 npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
@@ -115,6 +116,34 @@ visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=
 
 
 quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
+
+######################################################################################
+#### Produce the previous plots on the original scale of the predictors
+### Mvir is an example
+nn = 5001; XMvir = matrix(apply(X,2,median),nrow=1); XMvir=XMvir%x% rep(1,nn);colnames(XMvir) = colnames(X); XMvir = as.data.frame(XMvir)    
+XMvir$Mvir       = seq(min(X$Mvir),max(X$Mvir),length=nn)
+XMvir.trans      = predict(trans,XMvir) # Convert to the transformed scale
+# Predict and Produce confidence intervals:
+Preds_nzero <- predict(npar_nzero,newdata = XMvir.trans,type="link",se=T,unconditional=T) 
+fit.link    <- Preds_nzero$fit 
+se          <- Preds_nzero$se  # Standard errors 
+CI.L        <- fit.link-qnorm(0.975)*se 
+CI.R        <- fit.link+qnorm(0.975)*se 
+CI          <- cbind(fit.link,CI.L,CI.R) 
+CI          <- exp(CI)/(1+exp(CI)) # The first column correponds to the estimated probability of being non-zero.
+colnames(CI) <- c("probs","2.5%","97.5%")
+### One can ago ahead and plot Mvir against CI or
+### If you still to use visreg. do the following
+Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn)
+# replcae the last three columns of Plot$fit by CI and replace Mvir as well 
+D  = dim(Plot$fit)[2]
+Plot$fit[,(D-2):D] = CI ;  Plot$fit$Mvir = log10(XMvir$Mvir) # Transformation is recommneded so the scale can make some sense instead from 0-10^24
+                                                             #  
+                                                             # Also, we can change the ticks of the x-axis to 10^x  
+plot(Plot,ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]))
+
+
 
 
 >>>>>>> origin/master
