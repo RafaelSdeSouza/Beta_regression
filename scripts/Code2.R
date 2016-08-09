@@ -84,8 +84,24 @@ gam.check(M_non.zero) # Residual analysis
 
 # Plot using visreg
 
+
 visreg(M_non.zero,"NH_10",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
        fill.par=list(col=c('blue')),scale = "response",rug = 2)
+=======
+visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
+
+#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
+
+#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
+
+
+quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
+
+
+
 
 
 visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
