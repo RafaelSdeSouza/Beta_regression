@@ -58,43 +58,43 @@ quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height =
 ### Plot the data (transformed) with a smoother:
 ### Good practice to go through all predictors (notice non-linearity):
 non.zero <- ifelse(y > 0, 1, 0)
-d        <- data.frame(Xtrans,y=y,non.zero)
-ggplot(d, aes(x=Mstar, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
-ggplot(d, aes(x=sfr_gas, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
-ggplot(d, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw() #  weird !
+Dat.trans        <- data.frame(Xtrans,y=y,non.zero)
+ggplot(Dat.trans, aes(x=Mstar, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
+ggplot(Dat.trans, aes(x=sfr_gas, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
+ggplot(Dat.trans, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw() #  weird !
 
 ####
 #### Modelling:
 #### Using Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0)
-mod_linear_nzero   <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = d, family = binomial(link = logit))
+simple_nzero       <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
-M_non.zero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)    + s(Mgas,bs="cr",k=r) + s(Mvir,bs="cr",k=r) + s(sfr_gas,bs="cr",k=r) + 
-                            s(ssfr_gas,bs="cr",k=r) + s(sfr_stars,bs="cr",k=r)+ s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
-                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r) + s(NH_10,bs="cr",k=r) + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
-                    data=d,family=binomial(link="logit"),method="REML",select=TRUE)
+npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
+                                     s(ssfr_gas,bs="cr",k=r)      + s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
+                                     s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
+                    data=Dat.trans,family=binomial(link="logit"),method="REML",select=TRUE,gamma=1.4)
 
 
 
-anova.gam(mod_linear_nzero,M_non.zero,test="Chisq") # Test the simple model against the more complicated one
-summary(M_non.zero)
-plot(M_non.zero,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) # Non-linearity does not seem obvious for the some of the variables 
-gam.check(M_non.zero) # Residual analysis
+anova.gam(simple_nzero,npar_nzero,test="Chisq") # Test the simple model against the more complicated one
+summary(npar_nzero)
+plot(npar_nzero,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) # Non-linearity does not seem obvious for the some of the variables 
+gam.check(npar_nzero) # Residual analysis
 
 
 # Plot using visreg
 
 
-visreg(M_non.zero,"NH_10",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
+visreg(npar_nzero,"NH_10",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
        fill.par=list(col=c('blue')),scale = "response",rug = 2)
 =======
-visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
        fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
 
-#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
 #       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
-#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
 #       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
 
@@ -104,13 +104,13 @@ quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height =
 
 
 
-visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
        fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
 
-#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
 #       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
-#visreg(M_non.zero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
 #       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
 
@@ -119,42 +119,20 @@ quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height =
 
 >>>>>>> origin/master
 
-### 2) Model Average y when y > 0. 
-## Competing models     1) log normal (simple but can produce predicted values greater than 1)
-##                      2) beta    (correct scale but more complicated) 
-##                      3) Gamma models (can handle skewness naturally)
-# Log normal
-M_L_y    <- gam(log(y) ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
-                  s(ssfr_gas,bs="cr",k=100) +  s(sfr_stars,bs="cr",k=100)  + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
-                subset=y>0,data=d,gamma=1.4)
-
-summary(M_L_y)
-plot(M_L_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
-gam.check(M_L_y) # Residual analysis
-
-
-# Beta  
-M_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
+### 2) Model Average y when y > 0 using non parametric beta regression model 
+npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
                   s(ssfr_gas,bs="cr",k=100) +  s(sfr_stars,bs="cr",k=100)  + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
                   s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
-                  subset=y>0,data=d,family=betar(link="logit"),gamma=1.4)
+                  subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
-summary(M_Beta_y)
-plot(M_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
-gam.check(M_Beta_y) # Residual analysis
+summary(npar_Beta_y)
+plot(npar_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
+gam.check(npar_Beta_y) # Residual analysis
 
-visreg(M_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
+visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
        points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
 
 # Gamma 
-M_Gamma_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                     s(ssfr_gas,bs="cr",k=100) + s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100),
-                     subset=y>0,data=d,family=Gamma(link="log"),gamma=1.4)
-
-summary(M_Gamma_y)
-plot(M_Gamma_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
-gam.check(M_Gamma_y) # Residual analysis
 
 
 #### 
@@ -163,14 +141,14 @@ gam.check(M_Gamma_y) # Residual analysis
 xp= X[c(100,363,987),]; xp=as.data.frame(xp);colnames(xp) = colnames(X)
 xp.trans <- predict(trans,xp) # The "new" Transformed xp      
 # Find pr(y = 0) at xp 
-predict(M_non.zero,newdata=xp.trans,type="response")
+predict(npar_nzero,newdata=xp.trans,type="response")
 # Predict the average of y at xp: 
-predict(M_non.zero,newdata=xp.trans,type="response")*predict(M_Beta_y,newdata=xp.trans,type="response")
+predict(npar_nzero,newdata=xp.trans,type="response")*predict(npar_Beta_y,newdata=xp.trans,type="response")
 
 
 
 ## Fitted values:
-fit = predict(M_non.zero,newdata=as.data.frame(Xtrans),type="response")*predict(M_Beta_y,newdata=as.data.frame(Xtrans),type="response")
+fit = predict(npar_nzero,newdata=as.data.frame(Xtrans),type="response")*predict(npar_Beta_y,newdata=as.data.frame(Xtrans),type="response")
 cor(fit,y)
 plot(fit,y,pch=20,cex=0.5)
 abline(0,1,lty=2,col="Black",lwd=3)
