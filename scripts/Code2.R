@@ -85,15 +85,8 @@ gam.check(npar_nzero) # Residual analysis
 
 # Plot using visreg
 
-
-visreg(npar_nzero,"NH_10",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
-       fill.par=list(col=c('blue')),scale = "response",rug = 2)
-
 visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
        fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
-
-
-
 
 quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
 
@@ -114,7 +107,7 @@ CI.R        <- fit.link+qnorm(0.975)*se
 CI          <- cbind(fit.link,CI.L,CI.R) 
 CI          <- exp(CI)/(1+exp(CI)) # The first column correponds to the estimated probability of being non-zero.
 colnames(CI) <- c("probs","CI_L","CI_R")
-### One can ago ahead and plot Mvir against CI or
+### One can ago ahead and plot Mvir against CI 
 # Using ggplot2
 
 # Data for ggplot2
@@ -142,7 +135,7 @@ theme_bw()+
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
 
-
+# Or
 ### If you still to use visreg. do the following
 #Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn,partial=T)
 # replace the last three columns of Plot$fit by CI and replace Mvir as well 
@@ -170,8 +163,6 @@ gam.check(npar_Beta_y) # Residual analysis
 
 visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
        points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
-
-# Gamma 
 
 
 #### 
