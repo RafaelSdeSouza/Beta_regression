@@ -213,4 +213,3 @@ ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
 
-
