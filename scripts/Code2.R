@@ -117,9 +117,13 @@ colnames(CI) <- c("probs","CI_L","CI_R")
 ### One can ago ahead and plot Mvir against CI or
 # Using ggplot2
 
+# Data for ggplot2
 gg_mvir <-as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=non.zero)
 
+
+
+# Plot  via ggplot2
 ggplot(gg_mvir,aes(x=Mvir,y=probs))+
   geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
 geom_ribbon(aes(x=Mvir,y=probs,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
@@ -140,14 +144,14 @@ theme_bw()+
 
 
 ### If you still to use visreg. do the following
-Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn,partial=T)
+#Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn,partial=T)
 # replace the last three columns of Plot$fit by CI and replace Mvir as well 
-D  = dim(Plot$fit)[2]
-Plot$fit[,(D-2):D] = CI ;  Plot$fit$Mvir = log10(XMvir$Mvir) # Transformation is recommneded so the scale can make some sense instead from 0-10^24
+#D  = dim(Plot$fit)[2]
+#Plot$fit[,(D-2):D] = CI ;  Plot$fit$Mvir = log10(XMvir$Mvir) # Transformation is recommneded so the scale can make some sense instead from 0-10^24
                                                              #  
                                                              # Also, we can change the ticks of the x-axis to 10^x  
-plot(Plot,ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]),partial=T)
+#plot(Plot,ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]),partial=T)
 
 
 
