@@ -57,11 +57,11 @@ quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height =
 ### Some graphics:
 ### Plot the data (transformed) with a smoother:
 ### Good practice to go through all predictors (notice non-linearity):
-non.zero <- ifelse(y > 0, 1, 0)
+non.zero <- ifelse(y > 0, 1, 0);fesc = as.factor(non.zero);levels(fesc) = c(expression("fesc = 0"), expression(fesc>0))
 Dat.trans        <- data.frame(Xtrans,y=y,non.zero)
-ggplot(Dat.trans, aes(x=Mstar, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
-ggplot(Dat.trans, aes(x=sfr_gas, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
-ggplot(Dat.trans, aes(x=NH_10, y=y, colour = as.factor(non.zero))) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw() #  weird !
+ggplot(Dat.trans, aes(x=Mstar, y=y, colour = fesc))   + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
+ggplot(Dat.trans, aes(x=sfr_gas, y=y, colour = fesc)) + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw()
+ggplot(Dat.trans, aes(x=NH_10, y=y, colour = fesc))   + geom_point(size=3,alpha = .5,pch=20) + geom_smooth(lwd=1.5,col="Blue")+ theme_bw() #  weird !
 
 ####
 #### Modelling using non-parametric hurdle regression model:
@@ -95,7 +95,7 @@ quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height =
 ######################################################################################
 #### Produce the previous plots on the original scale of the predictors
 ### Mvir is an example
-nn = 5001; XMvir = matrix(apply(X,2,median),nrow=1); XMvir=XMvir%x% rep(1,nn);colnames(XMvir) = colnames(X); XMvir = as.data.frame(XMvir)    
+nn = 10^4+1; XMvir = matrix(apply(X,2,median),nrow=1); XMvir=XMvir%x% rep(1,nn);colnames(XMvir) = colnames(X); XMvir = as.data.frame(XMvir)    
 XMvir$Mvir       = seq(min(X[,"Mvir"]),max(X[,"Mvir"]),length=nn)
 XMvir.trans      = predict(trans,XMvir) # Convert to the transformed scale
 # Predict and Produce confidence intervals:
@@ -113,8 +113,6 @@ colnames(CI) <- c("probs","CI_L","CI_R")
 # Data for ggplot2
 gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=non.zero)
-
-
 
 # Plot  via ggplot2
 ggplot(gg_mvir,aes(x=Mvir,y=probs))+
@@ -147,16 +145,14 @@ ggplot(gg_mvir,aes(x=Mvir,y=probs))+
 #       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]),partial=T)
 
 
-
-
-
-
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
-npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
-                  s(ssfr_gas,bs="cr",k=100) +  s(sfr_stars,bs="cr",k=100)  + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                  s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100) + s(NH_10,bs="cr",k=100) + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
+simple_Beta_y   <- gam(y ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
+npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)         + s(Mgas,bs="cr",k=100)       + s(Mvir,bs="cr",k=100)       + s(sfr_gas,bs="cr",k=100) + 
+                       s(ssfr_gas,bs="cr",k=100)      +  s(sfr_stars,bs="cr",k=100) + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
+                       s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100)       + s(NH_10,bs="cr",k=100)      + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
                   subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
+anova.gam(simple_Beta_y,npar_Beta_y,test="Chisq") # Test the simple model against the more complicated one
 summary(npar_Beta_y)
 plot(npar_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
 gam.check(npar_Beta_y) # Residual analysis
@@ -164,18 +160,15 @@ gam.check(npar_Beta_y) # Residual analysis
 visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
        points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
 
-
-#### 
+#### Finally: 
 #### Prediction :
 #### Say at xp = X[c(100,363,987),] 
 xp= X[c(100,363,987),]; xp=as.data.frame(xp);colnames(xp) = colnames(X)
 xp.trans <- predict(trans,xp) # The "new" Transformed xp      
 # Find pr(y > 0) at xp 
 predict(npar_nzero,newdata=xp.trans,type="response")
-# Predict the average of y at xp: 
+# Predict the average of y at xp (Important) : 
 predict(npar_nzero,newdata=xp.trans,type="response")*predict(npar_Beta_y,newdata=xp.trans,type="response")
-
-
 
 ## Fitted values:
 fit = predict(npar_nzero,newdata=as.data.frame(Xtrans),type="response")*predict(npar_Beta_y,newdata=as.data.frame(Xtrans),type="response")
@@ -184,8 +177,40 @@ plot(fit,y,pch=20,cex=0.5)
 abline(0,1,lty=2,col="Black",lwd=3)
 
 
+#### To monitor the changes in the average of y as one vairables is changing keeping all other predictors fixed
+#### These are important plots as one can notice the importance of each predictor to y
+### Mvir is an example:
+Preds_nzero <- predict(npar_nzero ,newdata = XMvir.trans,type="response",se=T,unconditional=T)
+Preds_y     <- predict(npar_Beta_y,newdata = XMvir.trans,type="response",se=T,unconditional=T)
+mu1         <- Preds_nzero$fit;mu2 <- Preds_y$fit;
+se1         <- Preds_nzero$se ;se2 <- Preds_y$se;
+Predictions <- mu1*mu2
+se          <- sqrt(mu2^2*se1^2 + mu1^2*se2^2 + se1^2*se2^2)
+CI.L        <- Predictions-qnorm(0.975)*se 
+CI.R        <- Predictions+qnorm(0.975)*se 
+CI          <- cbind(Predictions,CI.L,CI.R) 
+colnames(CI) <- c("Predictions","CI_L","CI_R")
 
+gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
+gg_original <- data.frame(x=Data$Mvir,y=y)
 
-
+# Plot  via ggplot2
+ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
+  geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_line(col="white",size=1.5)+
+  theme_bw()+
+  ylab(expression(f[esc]))+
+  xlab(expression(M[200]))+
+  scale_x_continuous(trans = 'log10',
+                     breaks=trans_breaks("log10",function(x) 10^x),
+                     labels=trans_format("log10",math_format(10^.x)))+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
 
 
