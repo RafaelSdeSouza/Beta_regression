@@ -53,7 +53,7 @@ ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + geom_boxplot(fi
 
 quartz.save(type = 'pdf', file = '../figures/box_transf.pdf',width = 9, height = 6)
 
-### Two Models: 1) Model the probability that y > 0. 2) Model the Average of Y if y > 0 
+### Two Models: 1) Model the probability that y > 0.  2) Model the Average of Y if y > 0 
 ### Some graphics:
 ### Plot the data (transformed) with a smoother:
 ### Good practice to go through all predictors (notice non-linearity):
@@ -88,34 +88,16 @@ gam.check(npar_nzero) # Residual analysis
 
 visreg(npar_nzero,"NH_10",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="#33a02c"), points=list(cex=0.25, pch=2,col="grey80"),
        fill.par=list(col=c('blue')),scale = "response",rug = 2)
-=======
+
 visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
+       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
 
-#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
-#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
 
 
 quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
 
 
-
-
-
-visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]))
-
-#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
-
-#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,partial=T,type = "conditional")
-
-
-quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
 
 ######################################################################################
 #### Produce the previous plots on the original scale of the predictors
