@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071)
+library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -103,7 +103,7 @@ quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height =
 #### Produce the previous plots on the original scale of the predictors
 ### Mvir is an example
 nn = 5001; XMvir = matrix(apply(X,2,median),nrow=1); XMvir=XMvir%x% rep(1,nn);colnames(XMvir) = colnames(X); XMvir = as.data.frame(XMvir)    
-XMvir$Mvir       = seq(min(X$Mvir),max(X$Mvir),length=nn)
+XMvir$Mvir       = seq(min(X[,"Mvir"]),max(X[,"Mvir"]),length=nn)
 XMvir.trans      = predict(trans,XMvir) # Convert to the transformed scale
 # Predict and Produce confidence intervals:
 Preds_nzero <- predict(npar_nzero,newdata = XMvir.trans,type="link",se=T,unconditional=T) 
@@ -113,22 +113,46 @@ CI.L        <- fit.link-qnorm(0.975)*se
 CI.R        <- fit.link+qnorm(0.975)*se 
 CI          <- cbind(fit.link,CI.L,CI.R) 
 CI          <- exp(CI)/(1+exp(CI)) # The first column correponds to the estimated probability of being non-zero.
-colnames(CI) <- c("probs","2.5%","97.5%")
+colnames(CI) <- c("probs","CI_L","CI_R")
 ### One can ago ahead and plot Mvir against CI or
+# Using ggplot2
+
+gg_mvir <-as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
+gg_original <- data.frame(x=Data$Mvir,y=non.zero)
+
+ggplot(gg_mvir,aes(x=Mvir,y=probs))+
+  geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+geom_ribbon(aes(x=Mvir,y=probs,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+geom_line(col="white",size=1.5)+
+theme_bw()+
+  ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
+  xlab(expression(M[200]))+
+  scale_x_continuous(trans = 'log10',
+                     breaks=trans_breaks("log10",function(x) 10^x),
+                     labels=trans_format("log10",math_format(10^.x)))+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
+
+
 ### If you still to use visreg. do the following
-Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn)
-# replcae the last three columns of Plot$fit by CI and replace Mvir as well 
+Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn,partial=T)
+# replace the last three columns of Plot$fit by CI and replace Mvir as well 
 D  = dim(Plot$fit)[2]
 Plot$fit[,(D-2):D] = CI ;  Plot$fit$Mvir = log10(XMvir$Mvir) # Transformation is recommneded so the scale can make some sense instead from 0-10^24
                                                              #  
                                                              # Also, we can change the ticks of the x-axis to 10^x  
 plot(Plot,ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]))
+       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]),partial=T)
 
 
 
 
->>>>>>> origin/master
+
 
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
 npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)    + s(Mgas,bs="cr",k=100) + s(Mvir,bs="cr",k=100) + s(sfr_gas,bs="cr",k=100) + 
