@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales)
+library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales);library(MASS);library(hmisc)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -20,7 +20,17 @@ trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale"))        
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 ## Check skewness Before and After transformation
 apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age_star_mean
-apply(Xtrans,2,function(x) skewness(x)) # Much Improved. 
+apply(Xtrans,2,function(x) skewness(x))  
+## 
+## Examine relationships between predictors before and after:
+corrplot(cor(X,method="spearman"), order = "hclust",diag=F)
+corrplot(cor(Xtrans,method="spearman"), order = "hclust",diag=F)
+## Cluster Analysis:
+plot(varclus(X, similarity="spear")) 
+plot(varclus(Xtrans, similarity="spear")) 
+#### It seems there are some redundancies in the data and highly collinear.
+#### Either we remove some of the predictiors or combine them in one group. 
+
 ## Check boxplots
 ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
   geom_boxplot(fill="#33a02c",outlier.size = 0.5,outlier.colour = "grey")+
