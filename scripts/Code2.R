@@ -30,6 +30,7 @@ plot(varclus(X, similarity="spear"))
 plot(varclus(Xtrans, similarity="spear")) 
 #### It seems there are some redundancies in the data and highly collinear.
 #### Either we remove some of the predictiors or combine them in one group. 
+#### such as sfr_gas and ssfr_gas, sfr_stars and ssfr_stars
 
 ## Check boxplots
 ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
