@@ -74,7 +74,7 @@ r                  <- 30
 npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
                                      s(ssfr_gas,bs="cr",k=r)      + s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
                                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
-                    data=Dat.trans,family=binomial(link="logit"),method="REML",select=TRUE,gamma=1.4)
+                    data=Dat.trans,family=binomial(link="logit"),method="REML",select=TRUE,gamma=1.4) 
 
 
 
@@ -84,7 +84,7 @@ plot(npar_nzero,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMe
 gam.check(npar_nzero) # Residual analysis
 
 
-# Plot using visreg
+# Plot using visreg (see below instead for transformed scale)
 visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
        fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
 
@@ -132,6 +132,28 @@ ggplot(gg_mvir,aes(x=Mvir,y=probs))+
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
+        
+        
+### On the transformed scale:
+###
+gg_mvir_trans     <- as.data.frame(cbind(CI,Mvir=XMvir.trans$Mvir))
+gg_trans <- data.frame(x=Dat.trans$Mvir,y=y)
+# Plot  via ggplot2
+ggplot(gg_mvir_trans,aes(x=Mvir,y=Predictions))+
+  geom_point(data=gg_trans,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_line(col="white",size=1.5)+
+  theme_bw()+
+  ylab(expression(f[esc]))+
+  xlab(expression(M[200]))+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
+
 
 # Or
 ### If you still to use visreg. do the following
@@ -158,8 +180,44 @@ summary(npar_Beta_y)
 plot(npar_Beta_y,pages=1,residuals=F,scheme=1,rug=FALSE,lwd=3,shade=TRUE,seWithMean=TRUE) 
 gam.check(npar_Beta_y) # Residual analysis
 
-visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
-       points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
+# Predict and Produce confidence intervals:
+Preds_y     <- predict(npar_Beta_y,newdata = XMvir.trans,type="link",se=T,unconditional=T) 
+fit.link    <- Preds_nzero$fit 
+se          <- Preds_nzero$se  # Standard errors 
+CI.L        <- fit.link-qnorm(0.975)*se 
+CI.R        <- fit.link+qnorm(0.975)*se 
+CI          <- cbind(fit.link,CI.L,CI.R) 
+CI           <- exp(CI)/(1+exp(CI)) # The first column correponds to the estimated probability of being non-zero.
+colnames(CI) <- c("Predictions","CI_L","CI_R")
+## On the transformed scale:
+gg_mvir_trans     <- as.data.frame(cbind(CI,Mvir=XMvir.trans$Mvir))
+gg_trans <- data.frame(x=Dat.trans$Mvir,y=y)
+
+## For the original scale: replace the above two lines with
+##gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
+##gg_original <- data.frame(x=Data$Mvir,y=y)
+
+# Plot  via ggplot2
+ggplot(gg_mvir_trans,aes(x=Mvir,y=Predictions))+
+  geom_point(data=gg_trans,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_line(col="white",size=1.5)+
+  theme_bw()+
+  ylab(expression(f[esc]))+
+  xlab(expression(M[200]))+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
+
+
+
+
+#visreg(npar_Beta_y,"Mvir",scale = "response",rug = 2,ylab = expression(f[esc]),line=list(col="white"),
+#       points=list(cex=0.05, pch=3,col="orange"), fill.par=list(col=c('#33a02c')),partial=T) # Plot using visreg
 
 #### Finally: 
 #### Prediction :
@@ -213,4 +271,28 @@ ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
+
+### On the transformed scale:
+
+###
+gg_mvir_trans     <- as.data.frame(cbind(CI,Mvir=XMvir.trans$Mvir))
+gg_trans <- data.frame(x=Dat.trans$Mvir,y=y)
+# Plot  via ggplot2
+ggplot(gg_mvir_trans,aes(x=Mvir,y=Predictions))+
+  geom_point(data=gg_trans,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_line(col="white",size=1.5)+
+  theme_bw()+
+  ylab(expression(f[esc]))+
+  xlab(expression(M[200]))+
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        legend.position="top",
+        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
+        axis.title.x = element_text(vjust = -0.25),
+        text = element_text(size = 20,family="serif"))
+
+
+
 
