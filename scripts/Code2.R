@@ -23,6 +23,7 @@ apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age
 apply(Xtrans,2,function(x) skewness(x))  
 ## 
 ## Examine relationships between predictors before and after:
+## It is advisable to analyze (scientifically and statistically) the relationships between predictors apart from the response variable
 corrplot(cor(X,method="spearman"), order = "hclust",diag=F)
 corrplot(cor(Xtrans,method="spearman"), order = "hclust",diag=F)
 ## Cluster Analysis:
