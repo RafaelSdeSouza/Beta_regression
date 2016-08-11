@@ -13,9 +13,10 @@ y    <- data.2$fEsc;
 y[ y < 10^-3] = 0
 
 # Transform the columns of the design matrix (X)  to lighten the skewness, reduce the effect of outliers and reduce pairwise correlations if possible
-trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
+#trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
                                                                                        # to reduce outliers. Also I noticed that many of the variables are highly concetrated at one point. "spatailSign" will
-                                                                                       # distribute things around.  
+
+trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 ## Check skewness Before and After transformation
 apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age_star_mean
@@ -84,7 +85,6 @@ gam.check(npar_nzero) # Residual analysis
 
 
 # Plot using visreg
-
 visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
        fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
 
@@ -147,10 +147,11 @@ ggplot(gg_mvir,aes(x=Mvir,y=probs))+
 
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
 simple_Beta_y   <- gam(y ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
-npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=100)         + s(Mgas,bs="cr",k=100)       + s(Mvir,bs="cr",k=100)       + s(sfr_gas,bs="cr",k=100) + 
-                       s(ssfr_gas,bs="cr",k=100)      +  s(sfr_stars,bs="cr",k=100) + s(ssfr_stars,bs="cr",k=100) + s(baryon_fraction,bs="cr",k=100) +
-                       s(age_star_mean,bs="cr",k=100) + s(spin,bs="cr",k=100)       + s(NH_10,bs="cr",k=100)      + s(QHI,bs="cr",k=100) + s(C,bs="cr",k=100),
-                  subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
+r <- 40
+npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)       + s(Mvir,bs="cr",k=r)       + s(sfr_gas,bs="cr",k=r) + 
+                       s(ssfr_gas,bs="cr",k=r)      +  s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
+                       s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)       + s(NH_10,bs="cr",k=r)      + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
+                       subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
 anova.gam(simple_Beta_y,npar_Beta_y,test="Chisq") # Test the simple model against the more complicated one
 summary(npar_Beta_y)
