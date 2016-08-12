@@ -127,9 +127,9 @@ gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=non.zero)
 
 # Plot  via ggplot2
-ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
+ggplot(gg_mvir,aes(x=Mvir,y=probs))+
   geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_ribbon(aes(x=Mvir,y=probs,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
   geom_line(col="white",size=1.5)+
   theme_bw()+
   ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
