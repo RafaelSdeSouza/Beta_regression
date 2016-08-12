@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales);library(MASS);library(hmisc)
+library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales);library(MASS);library(Hmisc)
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
@@ -81,12 +81,12 @@ ggplot(Dat.trans, aes(x=NH_10, y=y, colour = fesc))   + geom_point(size=3,alpha 
 #### Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0) using nonparametric logistic regression
 
-simple_nzero       <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
+simple_nzero       <- bam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
-npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
+npar_nzero         <- bam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
                                      s(ssfr_gas,bs="cr",k=r)      + s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
                                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
-                    data=Dat.trans,family=binomial(link="logit"),method="REML",select=TRUE,gamma=1.4) 
+                    data=Dat.trans,family=binomial(link="logit"),gamma=1.4) 
 
 
 
@@ -97,10 +97,10 @@ gam.check(npar_nzero) # Residual analysis
 
 
 # Plot using visreg (see below instead for transformed scale)
-visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
+#visreg(npar_nzero,"Mvir",ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
+#       fill.par=list(col=c('#33a02c')),scale = "response",rug = 2,type = "conditional",xlab=expression(M[200]),partial=T)
 
-quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
+#quartz.save(type = 'pdf', file = '../figures/Mvir_binom.pdf',width = 7, height = 6)
 
 
 
@@ -118,7 +118,7 @@ CI.L        <- fit.link-qnorm(0.975)*se
 CI.R        <- fit.link+qnorm(0.975)*se 
 CI          <- cbind(fit.link,CI.L,CI.R) 
 CI          <- exp(CI)/(1+exp(CI)) # The first column correponds to the estimated probability of being non-zero.
-colnames(CI) <- c("probs","CI_L","CI_R")
+colnames(CI) <- c("Predictions","CI_L","CI_R")
 ### One can ago ahead and plot Mvir against CI 
 # Using ggplot2
 
@@ -127,9 +127,9 @@ gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=non.zero)
 
 # Plot  via ggplot2
-ggplot(gg_mvir,aes(x=Mvir,y=probs))+
+ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
   geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_ribbon(aes(x=Mvir,y=probs,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
   geom_line(col="white",size=1.5)+
   theme_bw()+
   ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
