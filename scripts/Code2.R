@@ -86,8 +86,10 @@ r                  <- 30
 npar_nzero         <- bam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
                                      s(ssfr_gas,bs="cr",k=r)      + s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
                                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
-                    data=Dat.trans,family=binomial(link="logit"),gamma=1.4) 
-
+                    data=Dat.trans,family=binomial(link="logit"),gamma=1.4)  # Please use bam with cautious as it might diverege. For example
+                                                                             # for the beta regression below it did not converge although it did not directly mention that.
+                                                                             # For this reason I abandoned it and retruned to gam as it is more thorough and better built 
+                                                                             # In any case we can still use bam if it works but we just need to be careful.
 
 
 anova.gam(simple_nzero,npar_nzero,test="Chisq") # Test the simple model against the more complicated one
