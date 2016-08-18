@@ -129,9 +129,9 @@ gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=non.zero)
 
 # Plot  via ggplot2
-ggplot(gg_mvir,aes(x=Mvir,y=probs))+
+ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
   geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_ribbon(aes(x=Mvir,y=probs,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
+  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
   geom_line(col="white",size=1.5)+
   theme_bw()+
   ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
@@ -250,7 +250,7 @@ plot(fit,y,pch=20,cex=0.5)
 abline(0,1,lty=2,col="Black",lwd=3)
 
 
-#### To monitor the changes in the average of y as one vairables is changing keeping all other predictors fixed
+#### To monitor the changes in the average of y as one variables is changing keeping all other predictors fixed
 #### These are important plots as one can notice the importance of each predictor to y
 ### Mvir is an example:
 Preds_nzero <- predict(npar_nzero ,newdata = XMvir.trans,type="response",se=T,unconditional=T)
@@ -267,9 +267,19 @@ colnames(CI) <- c("Predictions","CI_L","CI_R")
 gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=y)
 
+# for boxplot
+
+binx<-cut(log(Data$Mvir,10),breaks=6)
+gg_original$bin <- binx
+
+
+
+
 # Plot  via ggplot2
 ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
-  geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+ # geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
+  geom_hex(data=gg_original,bins = 50,aes(x=x,y=y,alpha=log(..count..)))+
+  scale_fill_continuous(low = "gray70", high = "gray20", trans = log10_trans())+
   geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
   geom_line(col="white",size=1.5)+
   theme_bw()+
@@ -281,7 +291,7 @@ ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
-        legend.position="top",
+        legend.position="none",
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
