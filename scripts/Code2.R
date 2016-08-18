@@ -267,13 +267,6 @@ colnames(CI) <- c("Predictions","CI_L","CI_R")
 gg_mvir <- as.data.frame(cbind(CI,Mvir=XMvir$Mvir))
 gg_original <- data.frame(x=Data$Mvir,y=y)
 
-# for boxplot
-
-binx<-cut(log(Data$Mvir,10),breaks=6)
-gg_original$bin <- binx
-
-
-
 
 # Plot  via ggplot2
 ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
