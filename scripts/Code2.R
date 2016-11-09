@@ -4,13 +4,19 @@ library(mgcv);library(ggplot2);
 library(corrplot);library(reshape);
 require(ggthemes);library(e1071);
 library(scales);library(MASS);library(Hmisc)
-library(corrplot);
-Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
+library(corrplot)
+Data=read.csv("..//data/FiBY.csv",header=T)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
                     "sfr_stars","ssfr_gas","ssfr_stars","baryon_fraction",
                     "spin","age_star_mean","age_star_max","age_star_min","NH_10","C")
-data.2 = data.1[data.1$redshift<=15,]
+
+
+index <- sample(seq_len(nrow(data.1)),replace=F, size = 10000)
+data.2 = data.1[index,]
+rm(data.1)
+rm(Data)
+
 ## fEsc is the variable of interest
 Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","ssfr_gas","sfr_stars","ssfr_stars","baryon_fraction","age_star_mean","spin","NH_10","QHI","C")])
 X    <- as.matrix(Data)
@@ -21,7 +27,7 @@ y[ y < 10^-3] = 0
 #trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
                                                                                        # to reduce outliers. Also I noticed that many of the variables are highly concetrated at one point. "spatailSign" will
 
-trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale"))                                                                                       # distribute things around.  
+trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 ## Check skewness Before and After transformation
 apply(X,2,function(x) skewness(x)) # All are exteremly skewed except perhaps age_star_mean
@@ -86,9 +92,9 @@ ggplot(Dat.trans, aes(x=NH_10, y=y, colour = fesc))   + geom_point(size=3,alpha 
 #### Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0) using nonparametric logistic regression
 
-simple_nzero       <- bam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
+simple_nzero       <- gam(non.zero ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C, data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
-npar_nzero         <- bam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
+npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)      + s(Mvir,bs="cr",k=r)         + s(sfr_gas,bs="cr",k=r)         + 
                                      s(ssfr_gas,bs="cr",k=r)      + s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
                                      s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
                     data=Dat.trans,family=binomial(link="logit"),gamma=1.4)  # Please use bam with cautious as it might diverege. For example
@@ -187,10 +193,10 @@ ggplot(gg_mvir_trans,aes(x=Mvir,y=Predictions))+
 
 
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
-simple_Beta_y   <- gam(y ~ Mstar + Mgas + Mvir + sfr_gas + ssfr_gas + sfr_stars+ ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
-r <- 40
-npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)       + s(Mvir,bs="cr",k=r)       + s(sfr_gas,bs="cr",k=r) + 
-                       s(ssfr_gas,bs="cr",k=r)      +  s(sfr_stars,bs="cr",k=r) + s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
+simple_Beta_y   <- gam(y ~ Mstar + Mgas + Mvir  + ssfr_gas +  ssfr_stars+  baryon_fraction + age_star_mean + spin + NH_10 + QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
+r <- 30
+npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=r)         + s(Mgas,bs="cr",k=r)       + s(Mvir,bs="cr",k=r)       + 
+                       s(ssfr_gas,bs="cr",k=r)      +  s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
                        s(age_star_mean,bs="cr",k=r) + s(spin,bs="cr",k=r)       + s(NH_10,bs="cr",k=r)      + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
                        subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
