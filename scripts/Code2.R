@@ -1,5 +1,10 @@
 rm(list=ls(all=TRUE))
-library(caret);library(visreg);library(mgcv);library(ggplot2);library(corrplot);library(reshape);require(ggthemes);library(e1071);library(scales);library(MASS);library(Hmisc)
+library(caret);library(visreg);
+library(mgcv);library(ggplot2);
+library(corrplot);library(reshape);
+require(ggthemes);library(e1071);
+library(scales);library(MASS);library(Hmisc)
+library(corrplot);
 Data=read.table("..//data/FiBY_escape_data_all.dat",header=F)
 data.1 = Data
 colnames(data.1)<-c("redshift","fEsc","Mvir","Mstar","Mgas","QHI","sfr_gas",
