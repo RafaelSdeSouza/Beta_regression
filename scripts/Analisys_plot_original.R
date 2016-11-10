@@ -17,10 +17,11 @@ data.1 = Data[Data$redshift < 15,]
 
 
 ## fEsc is the variable of interest
-data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","Mgas","ssfr_gas","ssfr_stars","baryon_fraction","spin","NH_10","QHI","C","redshift")])
+data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","Mgas","ssfr_gas","ssfr_stars","baryon_fraction","spin","QHI","C")])
+data.2$spin <- log10(data.2$spin)
 X    <- as.matrix(data.2)
 y    <- data.1$fEsc; 
-y[ y < 10^-5] = 0 # transform to zero everything below 1e-5
+y[ y < 10^-3] = 0 # transform to zero everything below 1e-5
 
 
 
@@ -45,13 +46,13 @@ Dat.trans        <- data.frame(Xtrans,y=y,non.zero)
 #### Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0) using nonparametric logistic regression
 
-simple_nzero       <- bam(non.zero ~ Mstar +  Mvir +  ssfr_gas + ssfr_stars+  baryon_fraction +  spin + NH_10 + QHI +C + redshift, data = Dat.trans, family = binomial(link = logit))
+simple_nzero       <- bam(non.zero ~ Mstar +  Mvir +  ssfr_gas + ssfr_stars+  baryon_fraction +  spin +  QHI +C , data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
 npar_nzero         <- bam(non.zero ~ s(Mstar,bs="cr",k=r) + s(Mvir,bs="cr",k=r)  + s(ssfr_gas,bs="cr",k=r)  + 
                              s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
-                            s(spin,bs="cr",k=r)      + s(NH_10,bs="cr",k=r)   + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r)+
-                            s(redshift,bs="cr",k=r),
-                    data=Dat.trans,family=binomial(link="logit"),gamma=1.4)  # Please use bam with cautious as it might diverege. For example
+                            s(spin,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
+                    
+                    data=Dat.trans,family=binomial(link="logit"),gamma=1.4)  # Please use bam with cautious as it might diverge. For example
                                                                              # for the beta regression below it did not converge although it did not directly mention that.
                                                                              # For this reason I abandoned it and retruned to gam as it is more thorough and better built 
                                                                              # In any case we can still use bam if it works but we just need to be careful.
@@ -64,12 +65,13 @@ gam.check(npar_nzero) # Residual analysis
 
 ######################################################################################
 #### Produce the previous plots on the original scale of the predictors
-### Mvir is an example
-nn = 10^4+1; XX = matrix(apply(X,2,median),nrow=1); 
+### loop over all 
+nn = 10^4+1; XX = matrix(apply(X,2,mean),nrow=1); 
 XX=XX%x% rep(1,nn);colnames(XX) = colnames(X); 
-XX = as.data.frame(XX)    
+XX = as.data.frame(XX)
 XX$Mvir       = seq(min(X[,"Mvir"]),max(X[,"Mvir"]),length=nn)
 XX.trans      = predict(trans,XX) # Convert to the transformed scale
+
 # Predict and Produce confidence intervals:
 Preds_nzero <- predict(npar_nzero,newdata = XX.trans,type="link",se=T,unconditional=T) 
 fit.link    <- Preds_nzero$fit 
@@ -85,7 +87,6 @@ colnames(CI) <- c("Predictions","CI_L","CI_R")
 # Data for ggplot2
 gg_mvir <- as.data.frame(cbind(CI,Mvir=XX$Mvir))
 gg_original <- data.frame(x=data.2$Mvir,y=non.zero)
-
 # Plot  via ggplot2
 ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
 #  geom_hex(data=gg_original,bins = 100,aes(x=x,y=y),alpha=0.3,fill=c("#000000"))+
@@ -107,48 +108,14 @@ ggplot(gg_mvir,aes(x=Mvir,y=Predictions))+
         text = element_text(size = 20,family="serif"))
         
         
-### On the transformed scale:
-###
-gg_mvir_trans     <- as.data.frame(cbind(CI,Mvir=XX.trans$Mvir))
-gg_trans <- data.frame(x=Dat.trans$Mvir,y=y)
-# Plot  via ggplot2
-ggplot(gg_mvir_trans,aes(x=Mvir,y=Predictions))+
-  geom_point(data=gg_trans,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_ribbon(aes(x=Mvir,y=Predictions,ymin=CI_L, ymax=CI_R),fill=c("#33a02c")) +
-  geom_line(col="white",size=1.5)+
-  theme_bw()+
-  ylab(expression(f[esc]))+
-  xlab(expression(M[200]))+
-  theme(legend.background = element_rect(fill="white"),
-        legend.key = element_rect(fill = "white",color = "white"),
-        plot.background = element_rect(fill = "white"),
-        legend.position="top",
-        axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
-        axis.title.x = element_text(vjust = -0.25),
-        text = element_text(size = 20,family="serif"))
-
-
-
-
-
-# Or
-### If you still to use visreg. do the following
-#Plot = visreg(npar_nzero,"Mvir",scale = "response",nn=nn,partial=T)
-# replace the last three columns of Plot$fit by CI and replace Mvir as well 
-#D  = dim(Plot$fit)[2]
-#Plot$fit[,(D-2):D] = CI ;  Plot$fit$Mvir = log10(XMvir$Mvir) # Transformation is recommneded so the scale can make some sense instead from 0-10^24
-                                                             #  
-                                                             # Also, we can change the ticks of the x-axis to 10^x  
-#plot(Plot,ylab = expression(paste(f[esc] > 0.1,"%",sep="")),line=list(col="white"), points=list(cex=0.05, pch=3,col="orange"),
-#       fill.par=list(col=c('#33a02c')),rug = 2,xlab=expression(M[200]),partial=T)
 
 
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
-simple_Beta_y   <- gam(y ~ Mstar +  Mvir  + ssfr_gas +  ssfr_stars+  baryon_fraction +  spin + NH_10 + QHI +C + redshift,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
+simple_Beta_y   <- gam(y ~ Mstar +  Mvir  + ssfr_gas +  ssfr_stars+  baryon_fraction +  spin +  QHI +C + redshift,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 r <- 30
 npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=r)         +  s(Mvir,bs="cr",k=r)       + 
                        s(ssfr_gas,bs="cr",k=r)      +  s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
-                        s(spin,bs="cr",k=r)       + s(NH_10,bs="cr",k=r)      + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r)+
+                        s(spin,bs="cr",k=r)          + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r)+
                      s(redshift,bs="cr",k=r),
                        subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
