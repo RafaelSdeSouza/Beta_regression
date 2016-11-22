@@ -43,23 +43,30 @@ y[ y < 10^-3] = 0 # transform to zero everything below 1e-2
 trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 
+
+box1 = melt(as.data.frame(scale(X)));box1$case <- rep("Original  scale",nrow(box1))
+box2 = melt(as.data.frame(scale(Xtrans)));box2$case <- rep("Transformed  scale",nrow(box2))
+boxjoint <- rbind(box1,box2)
+boxjoint$case <- as.factor(boxjoint$case)
+
 ## Check boxplots
-ggplot(data=melt(as.data.frame(scale(X))), aes(variable, value)) +
+ggplot(data=boxjoint, aes(variable, value)) +
   geom_boxplot(fill="#ba122b",outlier.size = 0.5,outlier.colour = "grey80",colour="#CCCC99")+
   theme_bw()+xlab("")+
   scale_x_discrete(labels=c(expression(M[star]),expression(M[200]),
                             expression(sSFR[gas]),expression(sSFR[stars]),expression(f[b]),expression(log(lambda)),expression(Q[HI]),"C")) +
-  ylab("Untransformed  scale")+
+  ylab("")+
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
         legend.position="top",
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
-        text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))
+        text = element_text(size = 20,family="serif"),axis.text.x = element_text(angle = 90, hjust = 1))+
+        facet_wrap(~case,ncol=1,scale="free_y")
 # Print pdf
 
-quartz.save(type = 'pdf', file = '../figures/box_raw.pdf',width = 9, height = 6)
+quartz.save(type = 'pdf', file = '../figures/box_raw.pdf',width = 9, height = 8)
 
 ggplot(data=melt(as.data.frame(Xtrans)), aes(variable, value)) + 
   geom_boxplot(fill="#ba122b",outlier.size = 0.5,outlier.colour = "grey80",colour="#CCCC99")+
