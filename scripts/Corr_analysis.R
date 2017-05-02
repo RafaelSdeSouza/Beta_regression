@@ -11,10 +11,15 @@ data.2 = Data[index,]
 
 
 ## fEsc is the variable of interest
-Data <- as.data.frame(data.2[,c("Mstar","Mgas","Mvir","sfr_gas","ssfr_gas","sfr_stars","ssfr_stars","baryon_fraction","age_star_mean","spin","NH_10","QHI","C")])
+Data <- as.data.frame(data.2[,c("Mstar","Mvir","ssfr_gas","ssfr_stars","baryon_fraction","spin","QHI","C")])
 X    <- as.matrix(Data)
 trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
+
+## Labels
+names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[gas]/Gyrs^-1)","logM~(sSFR[stars]/Gyrs^-1)",    
+           "f[b]", "log~(lambda)","log~Q[HI]/s^-1","C")   
+
 
 ## Examine relationships between predictors before and after:
 ## It is advisable to analyze (scientifically and statistically) the relationships between predictors apart from the response variable
