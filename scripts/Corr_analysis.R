@@ -3,7 +3,11 @@ rm(list=ls(all=TRUE))
 library(caret);
 library(corrplot);library(reshape);
 library(corrplot);library(caret);
-library(Hmisc)
+library(Hmisc);
+require(PerformanceAnalytics);
+require(psych);library(corrr)
+
+
 Data=read.csv("..//data/FiBY.csv",header=T)
 
 index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
@@ -11,20 +15,51 @@ data.2 = Data[index,]
 
 
 ## fEsc is the variable of interest
-Data <- as.data.frame(data.2[,c("Mstar","Mvir","ssfr_gas","ssfr_stars","baryon_fraction","spin","QHI","C")])
+Data <- as.data.frame(data.2[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
 X    <- as.matrix(Data)
 trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 
-## Labels
-names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[gas]/Gyrs^-1)","logM~(sSFR[stars]/Gyrs^-1)",    
-           "f[b]", "log~(lambda)","log~Q[HI]/s^-1","C")   
+
+Xf <- cbind(X,fEsc=data.2$fEsc)
+cxf<-cor(Xf)[-9, "fEsc"]
 
 
 ## Examine relationships between predictors before and after:
 ## It is advisable to analyze (scientifically and statistically) the relationships between predictors apart from the response variable
 corrplot(cor(X,method="spearman"), order = "hclust",diag=F)
 corrplot(cor(Xtrans,method="spearman"), order = "hclust",diag=F)
+
+## Labels
+names <- c("Mstar","M200", "sSFR","sSFR*",    
+           "fb", "spin","QHI","C")   
+cx <- cor(X)
+row.names(cx) <- names
+colnames(cx) <- names
+
+
+superheat(cx, 
+          # color pallete
+          heat.pal = brewer.pal(5, "PuBuGn"),
+          # order rows/cols based on heirarchical clustering
+          pretty.order.rows = TRUE,
+          pretty.order.cols = TRUE,
+          # place dendrograms on columns and rows 
+          row.dendrogram = F, 
+          col.dendrogram = F,
+          # make gridlines white for enhanced prettiness
+          grid.hline.col = "white",
+          grid.vline.col = "white",
+          yt = cxf,
+          yt.plot.type = "bar",
+          yt.plot.size = 0.4,
+          yt.axis.name = "Correlation with fesc",
+          # rotate bottom label text
+          bottom.label.text.angle = 90,
+          legend.width=2.75)
+quartz.save("superheat.pdf",type = "pdf",height=9,width=7.5)
+
+
 ## Cluster Analysis:
 plot(varclus(X, similarity="spear")) 
 plot(varclus(Xtrans, similarity="spear")) 
