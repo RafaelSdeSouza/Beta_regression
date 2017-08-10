@@ -5,13 +5,14 @@ library(corrplot);library(reshape);
 library(corrplot);library(caret);
 library(Hmisc);
 require(PerformanceAnalytics);
-require(psych);library(corrr)
+require(psych);library(corrr);
+require(superheat);require(RColorBrewer)
 
 
 Data=read.csv("..//data/FiBY.csv",header=T)
 
 index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
-data.2 = Data[index,]
+data.2 = Data[,]
 
 
 ## fEsc is the variable of interest
@@ -22,7 +23,7 @@ Xtrans      <- predict(trans,X) # The "new" Transformed X
 
 
 Xf <- cbind(X,fEsc=data.2$fEsc)
-cxf<-cor(Xf)[-9, "fEsc"]
+cxf<-cor(Xf)[-8, "fEsc"]
 
 
 ## Examine relationships between predictors before and after:
@@ -31,8 +32,19 @@ corrplot(cor(X,method="spearman"), order = "hclust",diag=F)
 corrplot(cor(Xtrans,method="spearman"), order = "hclust",diag=F)
 
 ## Labels
-names <- c("Mstar","M200", "sSFR","sSFR*",    
+names <- c("Mstar","M200", "sSFR",    
            "fb", "spin","QHI","C")   
+
+
+require(tabplot)
+X2 <- as.data.frame(cbind(redshift= data.2$redshift, fEsc=data.2$fEsc,X))
+colnames(X2) <- c("z","fesc","Mstar","M200", "sSFR",    
+                           "fb", "spin","QHI","C") 
+tab<-tableplot(X2,fontsize = 10, legend.lines = 8)
+tableSave(tab, filename="super_table.pdf",width=12,height = 6)
+
+
+
 cx <- cor(X)
 row.names(cx) <- names
 colnames(cx) <- names
@@ -52,7 +64,7 @@ superheat(cx,
           grid.vline.col = "white",
           yt = cxf,
           yt.plot.type = "bar",
-          yt.plot.size = 0.4,
+          yt.plot.size = 0.6,
           yt.axis.name = "Correlation with fesc",
           # rotate bottom label text
           bottom.label.text.angle = 90,
