@@ -1,18 +1,31 @@
 # Correlation Analysis to sub-select predictors
 rm(list=ls(all=TRUE))
 library(caret);
-library(corrplot);library(reshape);
-library(corrplot);library(caret);
+library(corrplot);library(reshape2);
 library(Hmisc);
 require(PerformanceAnalytics);
 require(psych);library(corrr);
 require(superheat);require(RColorBrewer)
+require(scales)
 
 
 Data=read.csv("..//data/FiBY.csv",header=T)
 
 index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
 data.2 = Data[,]
+
+
+# Histogram of f_esc
+
+fEsc <- data.frame(x=data.2$fEsc)
+
+ggplot(fEsc, aes(x=x)) + geom_histogram(binwidth = 0.1,fill="#3698BF",colour="#D9D384") + theme_classic() +
+xlab(expression(f[esc])) + ylab("Galaxy counts")  +
+  scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
+ labels = trans_format('log10', math_format(10^.x))) +
+  theme(text = element_text(size = 20,family="serif")) +
+  coord_cartesian(ylim=c(1e0,5e4))
+quartz.save(type = 'pdf', file = '../figures/hist_fesc.pdf',width = 9, height = 6)
 
 
 ## fEsc is the variable of interest
