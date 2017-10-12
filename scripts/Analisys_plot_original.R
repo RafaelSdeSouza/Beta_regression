@@ -1,7 +1,7 @@
 #rm(list=ls(all=TRUE))
 library(caret);library(visreg);
 library(mgcv);library(ggplot2);
-library(corrplot);library(reshape);
+library(corrplot);library(reshape2);
 require(ggthemes);library(e1071);
 library(scales);library(MASS);library(Hmisc)
 library(corrplot);library(gridExtra)
@@ -13,16 +13,16 @@ Data=read.csv("..//data/FiBY.csv",header=T)
 #index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
 
 # Cut in redshift
-data.1 = Data[Data$redshift < 30,]
+data.1 = Data[Data$redshift < 20,]
 
 # Log modulus transformation
 L_M <-function(x){sign(x)*log10(abs(x) + 1)}
 
 ## fEsc is the variable of interest
-data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_gas","ssfr_stars","baryon_fraction","spin","QHI","C")])
+data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
 data.2$Mstar <- log10(data.2$Mstar)
 data.2$Mvir <- log10(data.2$Mvir)
-data.2$ssfr_gas <- L_M(data.2$ssfr_gas)
+#data.2$ssfr_gas <- L_M(data.2$ssfr_gas)
 data.2$ssfr_stars <- L_M(data.2$ssfr_stars)
 data.2$spin <- log10(data.2$spin)
 data.2$QHI  <- log10(data.2$QHI)
@@ -53,8 +53,7 @@ boxjoint$case <- as.factor(boxjoint$case)
 ggplot(data=boxjoint, aes(variable, value)) +
   geom_boxplot(fill="#ba122b",outlier.size = 0.5,outlier.colour = "grey80",colour="#CCCC99")+
   theme_bw()+xlab("")+
-  scale_x_discrete(labels=c(expression(M[star]),expression(M[200]),
-                            expression(sSFR[gas]),expression(sSFR[stars]),expression(f[b]),expression(log(lambda)),expression(Q[HI]),"C")) +
+  scale_x_discrete(labels=c(expression(M[star]),expression(M[200]),expression(sSFR[stars]),expression(f[b]),expression(log(lambda)),expression(Q[HI]),"C")) +
   ylab("")+
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
@@ -100,9 +99,9 @@ Dat.trans        <- data.frame(Xtrans,y=y,non.zero)
 #### Non-parametric regression function we will adopt more general regression functions without restricting to specific functional assumption 
 #### 1) Model Prob(y>0) using nonparametric logistic regression
 
-simple_nzero       <- gam(non.zero ~ Mstar +  Mvir +  ssfr_gas + ssfr_stars+  baryon_fraction +  spin +  QHI +C , data = Dat.trans, family = binomial(link = logit))
+simple_nzero       <- gam(non.zero ~ Mstar +  Mvir + ssfr_stars+  baryon_fraction +  spin +  QHI +C , data = Dat.trans, family = binomial(link = logit))
 r                  <- 30
-npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r) + s(Mvir,bs="cr",k=r)  + s(ssfr_gas,bs="cr",k=r)  + 
+npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r) + s(Mvir,bs="cr",k=r)  + 
                              s(ssfr_stars,bs="cr",k=r)   + s(baryon_fraction,bs="cr",k=r) +
                             s(spin,bs="cr",k=r)        + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
                     
@@ -121,7 +120,7 @@ npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r) + s(Mvir,bs="cr",k=r) 
 #### Produce the previous plots on the original scale of the predictors
 ### loop over all 
 #names for plot 
-names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[gas]/Gyrs^-1)","logM~(sSFR[stars]/Gyrs^-1)",    
+names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[stars]/Gyrs^-1)",    
 "f[b]", "log~(lambda)","log~Q[HI]/s^-1","C")    
 
 gg<-list()
@@ -153,11 +152,11 @@ gg_original[[i]] <- data.frame(x=data.2[,i],y=non.zero,var = rep(names[i],length
 
 # put altogether for facets
 ggg_x<-c()
-for(i in 1:8){
+for(i in 1:7){
 ggg_x <- rbind(ggg_x,gg_x[[i]])
 }  
 ggg_original <- c()
-for(i in 1:8){
+for(i in 1:7){
   ggg_original <- rbind(ggg_original,gg_original[[i]])
 }  
 
@@ -187,10 +186,10 @@ dev.off()
 
 
 ### 2) Model Average y when y > 0 using non parametric beta regression model 
-simple_Beta_y   <- gam(y ~ Mstar +  Mvir  + ssfr_gas +  ssfr_stars+  baryon_fraction +  spin +  QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
+simple_Beta_y   <- gam(y ~ Mstar +  Mvir  +   ssfr_stars+  baryon_fraction +  spin +  QHI +C,subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 r <- 30
 npar_Beta_y <- gam(y ~ s(Mstar,bs="cr",k=r)         +  s(Mvir,bs="cr",k=r)       + 
-                       s(ssfr_gas,bs="cr",k=r)      +  s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
+                       s(ssfr_stars,bs="cr",k=r) + s(baryon_fraction,bs="cr",k=r) +
                         s(spin,bs="cr",k=r)          + s(QHI,bs="cr",k=r) + s(C,bs="cr",k=r),
                        subset=y>0,data=Dat.trans,family=betar(link="logit"),gamma=1.4)
 
@@ -236,11 +235,11 @@ pp_original[[i]] <- data.frame(x=data.2[,i],y=y,var = rep(names[i],length(data.2
 
 # put altogether for facets
 ppp_x<-c()
-for(i in 1:8){
+for(i in 1:7){
   ppp_x <- rbind(ppp_x,pp_x[[i]])
 }  
 ppp_original <- c()
-for(i in 1:8){
+for(i in 1:7){
   ppp_original <- rbind(ppp_original,pp_original[[i]])
 } 
 # Plot  via ggplot2
@@ -303,11 +302,11 @@ vv_original[[i]] <- data.frame(x=data.2[,i],y=y,var = rep(names[i],length(data.2
 
 # put altogether for facets
 vvv_x<-c()
-for(i in 1:8){
+for(i in 1:7){
   vvv_x <- rbind(vvv_x,vv_x[[i]])
 }  
 vvv_original <- c()
-for(i in 1:8){
+for(i in 1:7){
   vvv_original <- rbind(vvv_original,vv_original[[i]])
 } 
 
