@@ -13,7 +13,7 @@ Data=read.csv("..//data/FiBY.csv",header=T)
 #index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
 
 # Cut in redshift
-data.1 = Data[Data$redshift < 20,]
+data.1 = Data[Data$redshift < 15,]
 
 # Log modulus transformation
 L_M <-function(x){sign(x)*log10(abs(x) + 1)}
@@ -40,7 +40,7 @@ y[ y < 10^-3] = 0 # transform to zero everything below 1e-2
 #trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign")) # Yeo-Johnson followed by centering and scaling. "spatialSign" is a bit complicated but it seems useful here
                                                                                        # to reduce outliers. Also I noticed that many of the variables are highly concetrated at one point. "spatailSign" will
 
-trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
+trans       <- preProcess(X,method = c("YeoJohnson","center", "scale"))                                                                                       # distribute things around.  
 Xtrans      <- predict(trans,X) # The "new" Transformed X                 
 
 
@@ -163,10 +163,10 @@ for(i in 1:7){
 # Plot  via ggplot2
 pdf("logit_part_3.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
-  geom_hex(data=ggg_original,bins = 75,aes(x=x,y=y),alpha=0.5)+
+#  geom_hex(data=ggg_original,bins = 75,aes(x=x,y=y),alpha=0.5)+
   scale_fill_continuous(low = "gray80", high = "gray10", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#ba122b")) +
-  geom_line(col="#CCCC99",size=1.5)+
+  geom_line(col="#CCCC99",size=0.5)+
   theme_bw()+
   ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
   xlab("")+
