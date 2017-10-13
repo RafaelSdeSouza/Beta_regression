@@ -13,7 +13,7 @@ Data=read.csv("..//data/FiBY.csv",header=T)
 #index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
 
 # Cut in redshift
-data.1 = Data[Data$redshift < 15,]
+data.1 = Data[Data$redshift < 25,]
 
 # Log modulus transformation
 L_M <-function(x){sign(x)*log10(abs(x) + 1)}
@@ -165,9 +165,9 @@ pdf("logit_part_3.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
 #  geom_hex(data=ggg_original,bins = 75,aes(x=x,y=y),alpha=0.5)+
   scale_fill_continuous(low = "gray80", high = "gray10", trans = log10_trans())+
-  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#ba122b")) +
-  geom_line(col="#CCCC99",size=0.5)+
-  theme_bw()+
+  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
+  geom_line(col="#D97C2B",size=0.75)+
+  theme_economist_white()+
   ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
   xlab("")+
   theme(legend.background = element_rect(fill="white"),
@@ -245,12 +245,12 @@ for(i in 1:7){
 # Plot  via ggplot2
 pdf("beta_part_3.pdf",width = 16,height = 8)
 ggplot(ppp_x,aes(x=x,y=Predictions))+
-  geom_hex(data=ppp_original,bins = 50,aes(x=x,y=y))+
-  scale_fill_continuous(low = "gray80", high = "gray10", trans = log_trans())+
+  geom_hex(data=ppp_original,bins = 50,aes(x=x,y=y),alpha=0.25)+
+  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D",trans = log_trans())+
   #  geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill=c("#ba122b")) +
-  geom_line(col="#CCCC99",size=1.5)+
-  theme_bw()+
+  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill= c("#3698BF"),alpha=0.75) +
+  geom_line(col="#D97C2B",size=0.75)+
+  theme_economist_white()+
   ylab(expression(f[esc]))+
   xlab("")+
   #  scale_x_continuous(trans = 'log10',
@@ -314,11 +314,11 @@ for(i in 1:7){
 pdf("hurdle_3.pdf",width = 16,height = 8)
 ggplot(vvv_x,aes(x=x,y=Predictions))+
   # geom_point(data=gg_original,aes(x=x,y=y),size=1,alpha=0.2,col="orange2",position = position_jitter (h = 0.025))+
-  geom_hex(data=vvv_original,bins = 50,aes(x=x,y=y))+
-  scale_fill_continuous(low = "gray80", high = "gray10", trans = log10_trans())+
-  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill=c("#ba122b")) +
-  geom_line(col="#CCCC99",size=1.5)+
-  theme_bw()+
+  geom_hex(data=vvv_original,bins = 50,aes(x=x,y=y),alpha=0.25)+
+  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D",trans = log10_trans())+
+  geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill=c("#3698BF"),alpha=0.75) +
+  geom_line(col="#D97C2B",size=0.75)+
+  theme_economist_white()+
   ylab(expression(f[esc]))+
   xlab("")+
   #    scale_y_continuous(trans = 'log10',
