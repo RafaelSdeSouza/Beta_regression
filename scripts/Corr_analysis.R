@@ -6,37 +6,142 @@ library(Hmisc);
 require(PerformanceAnalytics);
 require(psych);library(corrr);
 require(superheat);require(RColorBrewer)
-require(scales)
+require(scales);require(GGally);require(ggthemes)
 
 
 Data=read.csv("..//data/FiBY.csv",header=T)
 
-index <- sample(seq_len(nrow(Data)),replace=F, size = 40000)
-data.2 = Data[,]
+
+data.1 = Data[Data$redshift < 25,]
+
+# Log modulus transformation
+L_M <-function(x){sign(x)*log10(abs(x) + 1)}
+
+## fEsc is the variable of interest
+data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
+data.2$Mstar <- log10(data.2$Mstar)
+data.2$Mvir <- log10(data.2$Mvir)
+#data.2$ssfr_gas <- L_M(data.2$ssfr_gas)
+data.2$ssfr_stars <- L_M(data.2$ssfr_stars)
+data.2$spin <- log10(data.2$spin)
+data.2$QHI  <- log10(data.2$QHI)
+data.2$C  <- log10(data.2$C)
+
+
+#index <- sample(seq_len(nrow(Data)),replace=F, size = 50000)
 
 
 # Histogram of f_esc
 
-fEsc <- data.frame(x=data.2$fEsc)
+fEsc <- data.frame(fEsc=data.1$fEsc)
+fEsc[fEsc < 10^-3] = 0
 
-ggplot(fEsc, aes(x=x)) + geom_histogram(binwidth = 0.1,fill="#3698BF",colour="#D9D384") + theme_classic() +
+
+ggplot(fEsc, aes(x=fEsc)) + geom_histogram(binwidth = 0.1,fill="#3698BF",colour="#D9D384") + theme_classic() +
 xlab(expression(f[esc])) + ylab("Galaxy counts")  +
-  scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
- labels = trans_format('log10', math_format(10^.x))) +
+ scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
+labels = trans_format('log10', math_format(10^.x))) +
   theme(text = element_text(size = 20,family="serif")) +
   coord_cartesian(ylim=c(1e0,5e4))
+
+
+
+
 quartz.save(type = 'pdf', file = '../figures/hist_fesc.pdf',width = 9, height = 6)
 
 
 ## fEsc is the variable of interest
-Data <- as.data.frame(data.2[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
-X    <- as.matrix(Data)
-trans       <- preProcess(X,method = c("YeoJohnson", "center", "scale","spatialSign"))                                                                                       # distribute things around.  
-Xtrans      <- predict(trans,X) # The "new" Transformed X                 
+X    <- data.frame(data.2,fEsc = fEsc)
+
+my_fn <- function(data, mapping, ...){
+ ggplot(data = data, mapping = mapping) + 
+    geom_density2d(...) 
+}
+
+my_bin <- function(data, mapping, ..., low = "#3698BF", high = "#D97C2B") {
+  ggplot(data = data, mapping = mapping) +
+    geom_bin2d(...) +
+    scale_fill_gradient(low = low, high = high,trans = log10_trans()) +
+    theme_bw()
+}
 
 
-Xf <- cbind(X,fEsc=data.2$fEsc)
-cxf<-cor(Xf)[-8, "fEsc"]
+my_hist <- function(data, mapping, ...) {
+  ggplot(data = data, mapping = mapping) +
+    geom_histogram(bins = 10,fill="#3698BF",colour="#D9D384",...) +
+    theme_bw()
+}
+
+
+my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c(1, 5), ...) {
+  
+  # get the x and y data to use the other code
+  x <- eval(mapping$x, data)
+  y <- eval(mapping$y, data)
+  
+  ct <- cor.test(x,y)
+  
+  r <- unname(ct$estimate)
+  rt <- format(r, digits=2)[1]
+  tt <- as.character(rt)
+  
+  # plot the cor value
+  p <- ggally_text(
+    label = tt, 
+    mapping = aes(),
+    xP = 0.5, yP = 0.5, 
+    size = 6,
+    color=color,
+    ...
+  ) 
+  corColors <- RColorBrewer::brewer.pal(n = 7, name = "RdYlGn")[2:6]
+  
+  if (r <= -0.8) {
+    corCol <- corColors[1]
+  } else if (r <= -0.6) {
+    corCol <- corColors[2]
+  } else if (r < 0.6) {
+    corCol <- corColors[3]
+  } else if (r < 0.8) {
+    corCol <- corColors[4]
+  } else {
+    corCol <- corColors[5]
+  }
+  p <- p + theme(
+    panel.background = element_rect(fill= corCol)
+  )
+  
+  p
+}
+
+
+
+
+
+pm <- ggpairs(
+  X,
+  upper = list(continuous = my_custom_cor_color ),
+  diag=list(continuous= my_hist),
+  lower = list(continuous = my_bin)
+)
+
+
+p2 <- pm +  
+  theme(legend.background = element_rect(fill="white"),
+        legend.key = element_rect(fill = "white",color = "white"),
+        plot.background = element_rect(fill = "white"),
+        text = element_text(size = 10,family="serif")) 
+
+p2
+
+
+
+
+
+
+
+Xf <- data.frame(X,fEsc=fEsc)
+cxf<-cor(Xf)[-8, "x"]
 
 
 ## Examine relationships between predictors before and after:
@@ -50,7 +155,7 @@ names <- c("Mstar","M200", "sSFR",
 
 
 require(tabplot)
-X2 <- as.data.frame(cbind(redshift= data.2$redshift, fEsc=data.2$fEsc,X))
+X2 <- as.data.frame(cbind(redshift= data.2$redshift, fEsc=fEsc,X))
 colnames(X2) <- c("z","fesc","Mstar","M200", "sSFR",    
                            "fb", "spin","QHI","C") 
 tab<-tableplot(X2,fontsize = 10, legend.lines = 8)

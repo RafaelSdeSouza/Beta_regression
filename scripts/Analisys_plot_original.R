@@ -120,8 +120,12 @@ npar_nzero         <- gam(non.zero ~ s(Mstar,bs="cr",k=r) + s(Mvir,bs="cr",k=r) 
 #### Produce the previous plots on the original scale of the predictors
 ### loop over all 
 #names for plot 
-names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[stars]/Gyrs^-1)",    
-"f[b]", "log~(lambda)","log~Q[HI]/s^-1","C")    
+#names <- c("log~(M[star]/M[sun])","log~(M[200]/M[sun])", "logM~(sSFR[stars]/Gyrs^-1)",    
+#"f[b]", "log~(lambda)","log~Q[HI]/s^-1","C")    
+
+names <- c("M[star]","M[200]", "sSFR",    
+"f[b]", "lambda","Q[HI]","C")    
+
 
 gg<-list()
 gg_x <- list()
@@ -163,12 +167,12 @@ for(i in 1:7){
 # Plot  via ggplot2
 pdf("logit_part_3.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
-#  geom_hex(data=ggg_original,bins = 75,aes(x=x,y=y),alpha=0.5)+
-  scale_fill_continuous(low = "gray80", high = "gray10", trans = log10_trans())+
+  geom_hex(data=ggg_original,bins = 75,aes(x=x,y=y))+
+  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
   theme_economist_white()+
-  ylab(expression(paste(f[esc] > 0.1,"%",sep="")))+
+  ylab(expression(paste("Probability of ",~f[esc] > 0,sep="")))+
   xlab("")+
   theme(legend.background = element_rect(fill="white"),
        legend.key = element_rect(fill = "white",color = "white"),
@@ -340,7 +344,8 @@ dev.off()
 #### Finally: 
 #### Prediction :
 #### Say at xp = X[c(100,363,987),] 
-xp= X[c(100,363,987),]; xp=as.data.frame(xp);colnames(xp) = colnames(X)
+#xp= X[c(100,363,987),];
+xp= X; xp=as.data.frame(xp);colnames(xp) = colnames(X)
 xp.trans <- predict(trans,xp) # The "new" Transformed xp      
 # Find pr(y > 0) at xp 
 predict(npar_nzero,newdata=xp.trans,type="response")
