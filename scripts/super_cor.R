@@ -41,8 +41,8 @@ fEsc[fEsc < 10^-3] = 0
 X    <- data.frame(data.2,fEsc = fEsc)
 
 my_fn <- function(data, mapping, ...){
- ggplot(data = data, mapping = mapping) + 
-    geom_density2d(...) 
+ ggplot(data = data, mapping = mapping) +
+    geom_density2d(...)
 }
 
 my_bin <- function(data, mapping, ..., low = "#3698BF", high = "#D97C2B") {
@@ -61,29 +61,29 @@ my_hist <- function(data, mapping, ...) {
 
 
 my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c(1, 5), ...) {
-  
+
   # get the x and y data to use the other code
   x <- eval(mapping$x, data)
   y <- eval(mapping$y, data)
-  
-  ct <- cor.test(x,y)
-  
+
+  ct <- cor.test(x,y,method = "spearman" )
+
   r <- unname(ct$estimate)
   rt <- format(r, digits=2)[1]
   tt <- as.character(rt)
-  
+
   # plot the cor value
   p <- ggally_text(
-    label = tt, 
+    label = tt,
     mapping = aes(),
-    xP = 0.5, yP = 0.5, 
+    xP = 0.5, yP = 0.5,
     size = 6,
     color=color,
     ...
-  ) 
+  )
   corColors <- c("#a50026","#d73027","#f46d43","#fdae61","#fee090","#e0f3f8","#abd9e9",
                  "#74add1","#4575b4","#313695")
-  
+
   if (r <= -0.8) {
     corCol <- corColors[1]
   } else if (r > -0.8 & r <= -0.6  ) {
@@ -93,19 +93,19 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
   } else if (r > -0.4 & r <= -0.2) {
     corCol <- corColors[4]
   } else if (r > -0.2 & r <= 0) {
-    corCol <- corColors[5] 
+    corCol <- corColors[5]
   } else if (r > 0 & r <= 0.2) {
-    corCol <- corColors[6] 
+    corCol <- corColors[6]
   } else if (r > 0.2 & r <= 0.4) {
-    corCol <- corColors[7] 
+    corCol <- corColors[7]
   } else if (r > 0.4 & r <= 0.6) {
-    corCol <- corColors[8] 
+    corCol <- corColors[8]
   } else if (r > 0.6 & r <= 0.8) {
-    corCol <- corColors[9] 
+    corCol <- corColors[9]
     } else {
     corCol <- corColors[10]
   }
-  p <- p + 
+  p <- p +
     theme(panel.background = element_rect(fill= corCol),
                                           panel.grid.major = element_line(),
                                           panel.grid.major.x = element_blank(),
@@ -114,15 +114,15 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
                                           panel.grid.minor.x = element_blank(),
                                           panel.grid.minor.y = element_blank()
   )
-  
+
   p
 }
 
 
 
 ## Labels
-names <- c("M[star]","M[200]", "sSFR",    
-           "f[b]", "lambda","Q[HI]","C","f[esc]")   
+names <- c("M[star]","M[200]", "sSFR",
+           "f[b]", "lambda","Q[HI]","C","f[esc]")
 
 
 
@@ -136,15 +136,15 @@ pm <- ggpairs(
 )
 
 
-p2 <- pm +  
+p2 <- pm +
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
         text = element_text(size = 18.5,family="serif"),
-        axis.text.x = element_text(face="bold", color="gray15", 
+        axis.text.x = element_text(face="bold", color="gray15",
                                    size=12, angle=45),
-        axis.text.y = element_text(face="bold", color="gray15", 
-                                   size=12)) 
+        axis.text.y = element_text(face="bold", color="gray15",
+                                   size=12))
 
 
 png("../figures/super_cor.png",width = 1.75*480, height = 1.75*480)
