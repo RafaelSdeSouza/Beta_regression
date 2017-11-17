@@ -31,7 +31,7 @@ ggplot(b_all,aes(x=x,y=y,group=case,color=case,linetype=case)) +
   geom_line(name="",size=1.25) + scale_color_stata(name="") +
   scale_linetype_stata(name="") +
   theme_economist_white() +
-  theme(legend.key.width = unit(2.5, "cm"),legend.text=element_text(size=12.5),legend.background = element_rect(fill="transparent"),
+  theme(legend.key.width = unit(2.5, "cm"),legend.text=element_text(size=17.5),legend.background = element_rect(fill="transparent"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
         legend.position=c(0.5,0.875),
@@ -39,6 +39,7 @@ ggplot(b_all,aes(x=x,y=y,group=case,color=case,linetype=case)) +
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif")) +
     ylab("Beta Probability Density Function") +
+    xlab("y") +
   guides(col = guide_legend(nrow=3))
 dev.off()
 
