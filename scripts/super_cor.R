@@ -21,7 +21,6 @@ L_M <-function(x){sign(x)*log10(abs(x) + 1)}
 data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
 data.2$Mstar <- log10(data.2$Mstar)
 data.2$Mvir <- log10(data.2$Mvir)
-#data.2$ssfr_gas <- L_M(data.2$ssfr_gas)
 data.2$ssfr_stars <- L_M(data.2$ssfr_stars)
 data.2$spin <- log10(data.2$spin)
 data.2$QHI  <- log10(data.2$QHI)
@@ -55,8 +54,8 @@ my_bin <- function(data, mapping, ..., low = "#3698BF", high = "#D97C2B") {
 
 my_hist <- function(data, mapping, ...) {
   ggplot(data = data, mapping = mapping) +
-    geom_histogram(bins = 10,fill="#3698BF",colour="#D9D384",...) +
-    theme_bw()
+    geom_histogram(aes(y=..count../sum(..count..)),bins = 10,fill="#3698BF",colour="#D9D384",...) +
+    theme_bw() 
 }
 
 

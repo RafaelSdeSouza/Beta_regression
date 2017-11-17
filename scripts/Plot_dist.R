@@ -31,7 +31,11 @@ ggplot(b_all,aes(x=x,y=y,group=case,color=case,linetype=case)) +
   geom_line(name="",size=1.25) + scale_color_stata(name="") +
   scale_linetype_stata(name="") +
   theme_economist_white() +
+<<<<<<< HEAD
   theme(legend.key.width = unit(2.5, "cm"),legend.text=element_text(size=17.5),legend.background = element_rect(fill="transparent"),
+=======
+  theme(legend.key.width = unit(2.5, "cm"),legend.text=element_text(size=20),legend.background = element_rect(fill="transparent"),
+>>>>>>> f6cad1c671811afe7ef7d0b1489a98bf2ef18596
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
         legend.position=c(0.5,0.875),
