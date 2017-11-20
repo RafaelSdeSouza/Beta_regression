@@ -230,7 +230,7 @@ for(i in 1:p){
 pdf("Hurdle_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
   geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
-#  geom_line(aes(x=x,y=SD),size=1.25)+
+  geom_line(aes(x=x,y=SD),size=0.75,linetype="dashed")+
   scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
