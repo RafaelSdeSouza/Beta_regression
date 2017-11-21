@@ -32,6 +32,16 @@ p         = length(var.names) # Number of covariates
 ###################################################################################################################################################
 ###################################################################################################################################################
 ###################################################################################################################################################
+
+cutF <- function(x){cut(x,breaks=5)}
+cutMat <- apply(Data[,2:8],2,cutF)
+xcutMat <- melt(cutMat)[,3]
+dc <- melt(Data[,2:8])
+dc$cutMat <- xcutMat 
+dc$y <- Data[,1]
+colnames(dc) <- c("var","value","cutMat","y")
+levels(dc$var) <- var.names 
+
 ####
 #### Modelling using Hurdle Bionmial_Beta_GAM 
 #### Two stages
@@ -82,10 +92,18 @@ for(i in 1:p){
   ggg_original <- rbind(ggg_original,gg_original[[i]])
 }  
 
+#
+
+
+
+#
+
+
 # Plot  via ggplot2
 pdf("Binomial_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
-  geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
+#  geom_boxplot(data=dc,mapping =aes(x=cutMat,y=y))+
+ geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
   scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
