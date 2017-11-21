@@ -165,6 +165,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions))+
   theme_economist_white()+
   ylab(expression(paste("Average of ",~f[esc]," given that ", ~f[esc] > 0 ,sep="")))+
   xlab("")+
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
   theme(legend.background = element_rect(fill="white"),
        legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
