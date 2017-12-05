@@ -8,8 +8,9 @@ grank <- data.frame(rank,names)
 grank$names <- factor(grank$names, levels = rev(names))
 
 grank$names <- parse(grank$names)
+pdf("test_stat_hurdle.pdf",width = 6,height = 5)
 ggplot(grank,aes(x=names,y=rank)) +
-  geom_bar(stat="identity") +
+  geom_bar(stat="identity",fill="#3698BF") +
   scale_x_discrete(labels=rev(c(expression(Q[HI]),expression(f[b]),
                   "C",expression(M[200]),"sSFR",expression(lambda)))) +
   theme_economist_white()+
@@ -23,3 +24,4 @@ ggplot(grank,aes(x=names,y=rank)) +
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))
+dev.off()
