@@ -103,11 +103,12 @@ for(i in 1:p){
 pdf("Binomial_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
 #  geom_boxplot(data=dc,mapping =aes(x=cutMat,y=y))+
- geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
-  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
+# geom_hex(data=ggg_original,bins = 75,size=2,aes(x=x,y=y))+
+  geom_point(data=ggg_original,size=0.5,alpha=0.2,color="#D97C2B",aes(x=x,y=y),position = position_jitter(w = 0, h = 0.015))+
+  scale_fill_continuous(low = "white", high = "#D97C2B", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
-  theme_economist_white()+
+  theme_stata()+
   ylab(expression(paste("Probability of ",~f[esc] > 0,sep="")))+
   xlab("")+
   theme(legend.background = element_rect(fill="white"),
@@ -117,7 +118,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions))+
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))+
-  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed)
+  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed,strip.position="bottom")
 dev.off()
 ####
 ####
@@ -176,11 +177,11 @@ for(i in 1:p){
 # Plot  via ggplot2
 pdf("Beta_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
-  geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
-  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
+  geom_hex(data=ggg_original,alpha=0.65,bins = 75,aes(x=x,y=y))+
+  scale_fill_continuous(low = "white", high = "#D97C2B", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
-  theme_economist_white()+
+  theme_stata()+
   ylab(expression(paste("Average of ",~f[esc]," given that ", ~f[esc] > 0 ,sep="")))+
   xlab("")+
   scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
@@ -191,7 +192,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions))+
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))+
-  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed)
+  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed,strip.position="bottom")
 dev.off()
 
 
@@ -248,12 +249,12 @@ for(i in 1:p){
 # Plot  via ggplot2
 pdf("Hurdle_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions))+
-  geom_hex(data=ggg_original,alpha=0.25,bins = 75,aes(x=x,y=y))+
+  geom_hex(data=ggg_original,alpha=0.65,bins = 75,aes(x=x,y=y))+
   geom_line(aes(x=x,y=SD),size=0.75,linetype="dashed")+
-  scale_fill_continuous(low = "#D9D3B4", high = "#441D0D", trans = log10_trans())+
+  scale_fill_continuous(low = "white", high = "#D97C2B", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),fill = c("#3698BF"),alpha=0.75) +
   geom_line(col="#D97C2B",size=0.75)+
-  theme_economist_white()+
+  theme_stata()+
   ylab(expression(paste(~f[esc],sep="")))+
   xlab("")+
   theme(legend.background = element_rect(fill="white"),
@@ -263,7 +264,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions))+
         axis.title.y = element_text(vjust = 0.1,margin=margin(0,10,0,0)),
         axis.title.x = element_text(vjust = -0.25),
         text = element_text(size = 20,family="serif"))+
-  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed)
+  facet_wrap(~var,scales = "free_x",ncol=4,labeller = label_parsed,strip.position="bottom")
 dev.off()
 
 
