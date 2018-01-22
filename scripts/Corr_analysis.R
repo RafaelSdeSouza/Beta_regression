@@ -3,7 +3,7 @@ rm(list=ls(all=TRUE))
 library(corrplot);library(reshape2);
 library(Hmisc);
 require(PerformanceAnalytics);
-require(psych);library(corrr);
+require(psych);
 require(superheat);require(RColorBrewer)
 require(scales);require(GGally);require(ggthemes)
 
@@ -36,7 +36,7 @@ fEsc <- data.frame(fEsc=data.1$fEsc)
 fEsc[fEsc < 10^-3] = 0
 
 
-ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.1)),fill="#4271AE",colour = "gray80") + theme_classic() +
+ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#4271AE",colour = "gray80") + theme_classic() +
 xlab(expression(f[esc])) + ylab("Fraction of Galaxies")  +
 # scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
 #labels = trans_format('log10', math_format(10^.x))) +
@@ -170,8 +170,10 @@ p2 <- pm +
         plot.background = element_rect(fill = "white"),
         text = element_text(size = 16,family="serif")) 
 
-
+png("../figures/super_cor.png", width = 12, height = 10.5, units = 'in',res = 1200)
 p2
+dev.off()
+
 
 quartz.save(type = 'pdf', file = '../figures/super_cor.pdf',width = 11, height = 10.5)
 
