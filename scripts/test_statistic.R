@@ -1,7 +1,7 @@
 require(ggplot2)
 require(ggthemes)
 rank <- c(8838.27,6494.3,1385.06,1065.71, 720.38,520.97,67.07)
-names <- c("Q[HI]","f[b]","C","M[200]","M[star]","sSFR","lambda") 
+names <- c("Q[HI]","f[b]","C","M[200]","M['*']","sSFR","lambda") 
 grank <- data.frame(rank,names)
 
 
@@ -15,7 +15,7 @@ pdf("test_stat_hurdle.pdf",width = 6,height = 5)
 ggplot(grank,aes(x=names,y=rank)) +
   geom_bar(stat="identity",fill="#3698BF") +
   scale_x_discrete(labels=rev(c(expression(Q[HI]),expression(f[b]),
-                  "C",expression(M[200]),expression(M[star]),"sSFR",expression(lambda)))) +
+                  "C",expression(M[200]),expression(M['*']),"sSFR",expression(lambda)))) +
   theme_economist_white()+
   coord_flip() +
   ylab("Test statistic")+

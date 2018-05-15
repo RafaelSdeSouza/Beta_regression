@@ -10,7 +10,11 @@ L_M <-function(x){sign(x)*log10(abs(x) + 1)}
 ## fEsc is the variable of interest
 ## x is a vector of covariates
 x         = c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C") # with variable names 
-var.names <- c("M[star]/M[sun]","M[200]/M[sun]", "sSFR/Gyrs^-1","f[b]", "lambda","Q[HI]/s^-1","C")   
+#var.names <- c("M[star]/M[sun]","M[200]/M[sun]", "sSFR/Gyrs^-1","f[b]", "lambda","Q[HI]/s^-1","C")   
+
+var.names <- c("M['*']","M[200]", "sSFR","f[b]", "lambda","Q[HI]","C")   
+
+
 Data      <-  Data[,c("fEsc",x)]
 ##
 ## Log Transform each variable except C

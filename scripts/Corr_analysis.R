@@ -36,10 +36,23 @@ fEsc <- data.frame(fEsc=data.1$fEsc)
 fEsc[fEsc < 10^-3] = 0
 
 
+<<<<<<< HEAD
 
 ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#4271AE",colour = "gray80") + theme_classic() +
 #ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#3698BF",colour="#D9D384") + theme_classic() +
 #ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.1)),fill="#4271AE",colour = "gray80") + theme_classic() +
+=======
+bdens <- kdensity(fEsc[[1]],start="beta")
+
+
+ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#4271AE",colour = "gray80") + theme_classic() +
+
+
+#ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#3698BF",colour="#D9D384") + theme_classic() +
+
+#ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.1)),fill="#4271AE",colour = "gray80") + theme_classic() +
+
+>>>>>>> bfe02532943323ed5998f00c244f1bb144ae617b
 xlab(expression(f[esc])) + ylab("Fraction of Galaxies")  +
 # scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
 #labels = trans_format('log10', math_format(10^.x))) +
@@ -93,6 +106,11 @@ my_hist <- function(data, mapping, ...) {
 }
 
 
+
+x <- iris[,1]
+y <- iris[,2]
+
+
 my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c(1, 5), ...) {
   
   # get the x and y data to use the other code
@@ -107,14 +125,18 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
   
   
   # plot the cor value
-  p <- ggally_text(
-    label = tt, 
-    mapping = aes(),
-    xP = 0.5, yP = 0.5, 
-    size = 6,
-    color = color,
-    ...
-  ) 
+#  p <- ggally_text(
+#    label = tt, 
+#    mapping = aes(),
+#    xP = 0.5, yP = 0.5, 
+#    size = 6,
+#    color = color,
+#    ...
+#  )
+  
+  
+  
+  
   corColors <- c("#67001f","#b2182b","#d6604d","#f4a582","#fddbc7",
                  "#d1e5f0","#92c5de","#4393c3","#2166ac","#053061")
   
@@ -148,11 +170,29 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
   else {
     corCol <- corColors[10]
   }
-  p <- p + theme(
-    panel.background = element_rect(fill = corCol),
-    panel.grid.minor=element_blank(),
-    panel.grid.major=element_blank()
-  ) 
+
+  ell <- ellipse::ellipse(r, level=0.95, type='l', npoints=50, scale=c(.2, .2), centre=c(.5, .5))
+  p <- ggplot(data.frame(ell), aes(x=x, y=y))
+  p <- p + theme_void() + theme(
+    plot.background=element_blank(),
+    panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+    panel.border=element_blank(), axis.ticks=element_blank()
+  )
+  p <- p + geom_polygon(fill=corCol, color=corCol)
+  p <- p + geom_text(data=NULL, x=.5, y=.5, label= tt, size=6, col= color) +
+      theme(
+      panel.background = element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major=element_blank())
+  
+  
+ #  p <- p + 
+ #   geom_polygon(ell)
+ #   theme(
+ #   panel.background = element_rect(fill = corCol),
+ #   panel.grid.minor=element_blank(),
+ #   panel.grid.major=element_blank()
+ # ) 
   
   p
 }
@@ -163,7 +203,7 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
 
 
 pm <- ggpairs(
-  X, columnLabels = c("M[star]","M[200]", "sSFR","f[b]", "lambda","Q[HI]","C","f[esc]"), 
+  X, columnLabels = c("M['*']","M[200]", "sSFR","f[b]", "lambda","Q[HI]","C","f[esc]"), 
   labeller = "label_parsed",
   upper = list(continuous = my_custom_cor_color ),
   diag = list(continuous = my_hist),
