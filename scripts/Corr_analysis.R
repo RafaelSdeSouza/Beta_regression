@@ -36,6 +36,12 @@ fEsc <- data.frame(fEsc=data.1$fEsc)
 fEsc[fEsc < 10^-3] = 0
 
 
+<<<<<<< HEAD
+
+ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#4271AE",colour = "gray80") + theme_classic() +
+#ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.05)),fill="#3698BF",colour="#D9D384") + theme_classic() +
+#ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.1)),fill="#4271AE",colour = "gray80") + theme_classic() +
+=======
 bdens <- kdensity(fEsc[[1]],start="beta")
 
 
@@ -46,12 +52,19 @@ ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=
 
 #ggplot(fEsc, aes(x=fEsc)) + geom_histogram(aes(y=..count../sum(..count..)),size=1.5,breaks = c(0,seq(0.0001,1,by=0.1)),fill="#4271AE",colour = "gray80") + theme_classic() +
 
+>>>>>>> bfe02532943323ed5998f00c244f1bb144ae617b
 xlab(expression(f[esc])) + ylab("Fraction of Galaxies")  +
 # scale_y_continuous(trans = 'log10', breaks = trans_breaks('log10', function(x) 10^x),
 #labels = trans_format('log10', math_format(10^.x))) +
   theme(text = element_text(size = 20,family="serif")) 
 #+coord_cartesian(ylim=c(1e0,5e4))
 
+require(kdensity)
+
+kde = kdensity(fEsc[[1]], kernel = "beta")
+plot(kde, lwd = 2, col = "blue")
+
+rug(diff(LakeHuron))
 
 
 
