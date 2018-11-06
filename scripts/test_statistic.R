@@ -10,7 +10,7 @@ require(dplyr)
 dat <- read.csv("importance.csv") %>% melt(id="X") %>%
  mutate(alpha = (value/max(value))^{1/10})
 
-dat$X <- factor(dat$X, levels = rev(c("QHI","baryon_fraction","C","Mvir","Mstar","sfr_stars","spin")))
+dat$X <- factor(dat$X, levels = rev(c("QHI","baryon_fraction","C","Mvir","Mstar","ssfr_stars","spin")))
 
 
 
