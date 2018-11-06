@@ -10,12 +10,9 @@ require(dplyr)
 dat <- read.csv("importance.csv") %>% melt(id="X") %>%
  mutate(alpha = (value/max(value))^{1/10})
 
-dat$X <- factor(dat$X, levels = rev(c("QHI","baryon_fraction","C","Mvir","Mstar","ssfr_stars","spin")))
+dat$X <- factor(dat$X, levels = rev(c("QHI","baryon_fraction","C","Mvir","Mstar","sfr_stars","spin")))
 
-c("M['*']","M[200]", "sSFR","SFR", "f[b]", "lambda","Q[HI]","C")  
-'#1b9e77','#d95f02','#7570b3',
-#                            '#e7298a'
-'#66a61e','#e6ab02','#a6761d','#666666'
+
 
 pdf("test_stat_hurdle.pdf",width = 12,height = 5)
 ggplot(dat,aes(x=X,y=value,group=variable,fill=X)) +
@@ -43,5 +40,5 @@ ggplot(dat,aes(x=X,y=value,group=variable,fill=X)) +
 dev.off()
 
 
-rank <- c(8838.27,6494.3,1385.06,1065.71, 720.38,520.97,67.07)
+
 

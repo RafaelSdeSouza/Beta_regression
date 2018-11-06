@@ -1,5 +1,6 @@
 rm(list=ls(all=TRUE))
 library(mgcv);library(ggplot2);library(reshape2);library(ggthemes);library(MASS);library(hexbin);library(scales)
+require(dplyr)
 # Read data
 Data=read.csv("..//data/FiBY.csv")
 
@@ -12,10 +13,10 @@ L_M <-function(x){sign(x)*log10(abs(x) + 1)}
 
 ## fEsc is the variable of interest
 ## x is a vector of covariates
-x         = c("Mstar","Mvir","ssfr_stars","sfr_stars","baryon_fraction","spin","QHI","C") # with variable names 
+x         = c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C") # with variable names 
 #var.names <- c("M[star]/M[sun]","M[200]/M[sun]", "sSFR/Gyrs^-1","f[b]", "lambda","Q[HI]/s^-1","C")   
 
-var.names <- c("M['*']","M[200]", "sSFR","SFR", "f[b]", "lambda","Q[HI]","C")   
+var.names <- c("M['*']","M[200]", "sSFR", "f[b]", "lambda","Q[HI]","C")   
 
 
 Data      <-  Data[,c("fEsc",x)]
@@ -28,7 +29,8 @@ Data$spin        <- log10(Data$spin)
 Data$QHI         <- log10(Data$QHI)
 Data$C           <- log10(Data$C)
 
-Data$sfr_stars  <- L_M(Data$sfr_stars)
+#Data$sfr_stars  <- L_M(Data$sfr_stars)
+
 # Transform to zero everything below 1e-3 
 Data$fEsc[Data$fEsc < 10^-3] = 0
 colnames(Data)[1] = "f_esc"
@@ -44,32 +46,32 @@ p         = length(var.names) # Number of covariates
 
 
 
-cutF <- function(x){cut(x,breaks = seq(min(x),max(x),length.out = 20))}
-brk <- function(x){breaks = seq(min(x),max(x),length.out = 20)}
-numMat <- apply(Data[,2:9],2,brk)
-xnumMat <- melt(numMat)[,3]
+#cutF <- function(x){cut(x,breaks = seq(min(x),max(x),length.out = 10))}
+#brk <- function(x){breaks = seq(min(x),max(x),length.out = 10)}
+#numMat <- apply(Data[,2:9],2,brk)
+#xnumMat <- melt(numMat)[,3]
 
-cutMat <- as.factor(apply(Data[,2:9],2,cutF))
-xcutMat <- melt(cutMat)[,3]
+#cutMat <- as.factor(apply(Data[,2:9],2,cutF))
+#xcutMat <- melt(cutMat)[,3]
 
-dc <- melt(Data[,2:9])
-dc$cutMat <- xcutMat 
-dc$y <- Data$non.zero.f_esc
+#dc <- melt(Data[,2:9])
+#dc$cutMat <- xcutMat 
+#dc$y <- Data$non.zero.f_esc
 
 
-h  <- dc %>% group_by(variable,cutMat,y)  %>% 
-  summarise(n = n()) %>%
-  mutate(pct = ifelse(y==0, n/sum(n), 1 - n/sum(n))) %>%
+#h  <- dc %>% group_by(variable,cutMat,y)  %>% 
+#  summarise(n = n()) %>%
+#  mutate(pct = ifelse(y==0, n/sum(n), 1 - n/sum(n))) %>%
 #  summarize(mean = mean(y),sd = sd(y)/sqrt(length(y))) %>%
-  as.data.frame(na.rm = FALSE) %>%
-  mutate(xnumMat = rep(xnumMat,each=2)) %>% set_colnames(c("var","cutMat","y","n","pct","xnumMat"))
+ # as.data.frame(na.rm = FALSE) %>%
+#  mutate(xnumMat = rep(xnumMat,each=2)) %>% set_colnames(c("var","cutMat","y","n","pct","xnumMat"))
+#
+#levels(h$var) <- var.names
 
-levels(h$var) <- var.names
 
 
-
-colnames(dc) <- c("y","var","value","cutMat")
-levels(dc$var) <- var.names 
+#colnames(dc) <- c("y","var","value","cutMat")
+#levels(dc$var) <- var.names 
 
 ####
 #### Modelling using Hurdle Bionmial_Beta_GAM 
@@ -78,7 +80,7 @@ levels(dc$var) <- var.names
 ## Binomial_GAM
 
 Binomial_GAM         <- gam(non.zero.f_esc ~ s(Mstar,bs="cr",k=12) +  s(Mvir,bs="cr",k=12)  +  s(ssfr_stars,bs="cr",k=12) +
-                              s(sfr_stars,bs="cr",k=12) + s(baryon_fraction,bs="cr",k=25) +
+                                             s(baryon_fraction,bs="cr",k=25) +
                                              s(spin,bs="cr")  +  s(QHI,bs="cr",k=25)   +  s(C,bs="cr",k=20),                    
                                              data=Data,family= binomial(link="logit"),method="REML") 
 
@@ -125,7 +127,7 @@ for(i in 1:p){
 #
 
 
-
+#'#e7298a'
 # Plot  via ggplot2
 pdf("Binomial_GAM.pdf",width = 16,height = 8)
 ggplot(ggg_x,aes(x=x,y=Predictions,group=var,fill=var))+
@@ -136,7 +138,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions,group=var,fill=var))+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R),alpha=0.75) +
   geom_line(aes(x=x,y=Predictions),col="black",size=0.5)+
   theme_stata()+
-  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666')) +
+  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#66a61e','#e6ab02','#a6761d','#666666')) +
   ylab(expression(paste("Probability of ",~f[esc] > 0,sep="")))+
   xlab("")+
   theme(legend.background = element_rect(fill="white"),
@@ -159,7 +161,7 @@ dev.off()
 ###
 r <- 35
 Beta_GAM    <- gam(f_esc ~ s(Mstar,bs="cr",k=r) +  s(Mvir,bs="cr",k=r)  +  s(ssfr_stars,bs="cr",k=r) + 
-                           s(sfr_stars,bs="cr",k=12) + s(baryon_fraction,bs="cr",k=r) +
+                          s(baryon_fraction,bs="cr",k=r) +
                            s(spin,bs="cr",k=r)  +  s(QHI,bs="cr",k=r)   +  s(C,bs="cr",k=r),
                            subset=f_esc>0,data=Data,family=betar(link="logit"),method="REML")
 
@@ -212,7 +214,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions,group=var,fill=var))+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R)) +
   geom_line(col="black",size=0.5)+
   theme_stata()+
-  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666')) +
+  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#66a61e','#e6ab02','#a6761d','#666666')) +
   ylab(expression(paste("Average of ",~f[esc]," given that ", ~f[esc] > 0 ,sep="")))+
   xlab("")+
   scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
@@ -284,7 +286,7 @@ ggplot(ggg_x,aes(x=x,y=Predictions,group=var,fill=var))+
   geom_line(aes(x=x,y=SD),size=0.75,linetype="dashed")+
  # scale_fill_continuous(low = "white", high = "#D97C2B", trans = log10_trans())+
   geom_ribbon(aes(ymin=CI_L, ymax=CI_R)) +
-  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666')) +
+  scale_fill_manual(values=c('#1b9e77','#d95f02','#7570b3','#66a61e','#e6ab02','#a6761d','#666666')) +
   geom_line(col="black",size=0.5)+
   theme_stata()+
   ylab(expression(paste(~f[esc],sep="")))+
@@ -302,11 +304,16 @@ dev.off()
 
 
 
+# Test statistics
+x1=anova(Binomial_GAM)$chi.sq-anova(Binomial_GAM)$edf
+x2=anova(Beta_GAM)$chi.sq-anova(Beta_GAM)$edf
+x3=x1+x2
 
 
+testS <- data.frame(Binomial=x1,Beta=x2,Hurdle=x3)
+row.names(testS) <- x
 
-
-
+write.csv(testS,"importance2.csv")
 
 
 
