@@ -17,7 +17,7 @@ data.1 = Data[Data$redshift < 25,]
 L_M <-function(x){sign(x)*log10(abs(x) + 1)}
 
 ## fEsc is the variable of interest
-data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_stars","baryon_fraction","spin","QHI","C")])
+data.2 <- as.data.frame(data.1[,c("Mstar","Mvir","ssfr_stars","sfr_stars","baryon_fraction","spin","QHI","C")])
 data.2$Mstar <- log10(data.2$Mstar)
 data.2$Mvir <- log10(data.2$Mvir)
 #data.2$ssfr_gas <- L_M(data.2$ssfr_gas)
@@ -25,7 +25,7 @@ data.2$ssfr_stars <- L_M(data.2$ssfr_stars)
 data.2$spin <- log10(data.2$spin)
 data.2$QHI  <- log10(data.2$QHI)
 data.2$C  <- log10(data.2$C)
-
+data.2$sfr_stars  <- L_M(data.2$sfr_stars)
 
 #index <- sample(seq_len(nrow(Data)),replace=F, size = 50000)
 
@@ -65,12 +65,14 @@ my_fn <- function(data, mapping, ...){
     geom_density2d(...) 
 }
 
-my_bin <- function(data, mapping, ..., low = "#477187", high = "#67001f") {
+my_bin <- function(data, mapping, ..., low = "#477187", high = "#D97C2B") {
   ggplot(data = data, mapping = mapping) +
     geom_bin2d(...) +
     scale_fill_gradient(low = low, high = high,trans = log10_trans()) +
     theme_bw() +
-    scale_y_continuous(round(seq(min(data), max(data), length.out = 3),1))
+    scale_y_continuous(round(seq(min(data), max(data), length.out = 3),1)) +
+    theme(axis.text.x=element_text(angle = 50))
+    
 }
 
 
@@ -111,8 +113,9 @@ my_custom_cor_color <- function(data, mapping, color = I("black"), sizeRange = c
   
   
   
-corColors <- c("#67001f","#b2182b","#d6604d","#f4a582","#fddbc7",
-                 "#d1e5f0","#92c5de","#4393c3","#2166ac","#053061")
+corColors <- c("#67001f","#a50026","#d73027","#f46d43",
+               "#fdae61","#fee090","#e0f3f8",
+               "#abd9e9","#74add1","#4575b4")
   
   if (r <= -0.8) {
     corCol <- corColors[1]
@@ -177,7 +180,7 @@ corColors <- c("#67001f","#b2182b","#d6604d","#f4a582","#fddbc7",
 
 
 pm <- ggpairs(
-  X, columnLabels = c("M['*']","M[200]", "sSFR","f[b]", "lambda","Q[HI]","C","f[esc]"), 
+  X, columnLabels = c("M['*']","M[200]", "sSFR","SFR","f[b]", "lambda","Q[HI]","C","f[esc]"), 
   labeller = "label_parsed",
  upper = list(continuous = my_custom_cor_color ),
   diag = list(continuous = my_hist),
@@ -191,14 +194,12 @@ p2 <- pm +
   theme(legend.background = element_rect(fill="white"),
         legend.key = element_rect(fill = "white",color = "white"),
         plot.background = element_rect(fill = "white"),
-        text = element_text(size = 16,family="serif")) 
+        text = element_text(size = 20,family="serif")) 
 
-png("../figures/super_cor.png", width = 12, height = 10.5, units = 'in',res = 1200)
+png("../figures/super_cor.png", width = 16, height = 14, units = 'in',res = 1200)
 p2
 dev.off()
 
-
-quartz.save(type = 'pdf', file = '../figures/super_cor.pdf',width = 11, height = 10.5)
 
 
 

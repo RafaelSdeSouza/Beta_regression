@@ -2,6 +2,9 @@ rm(list=ls(all=TRUE))
 library(mgcv);library(ggplot2);library(reshape2);library(ggthemes);library(MASS);library(hexbin);library(scales)
 # Read data
 Data=read.csv("..//data/FiBY.csv")
+
+
+
 Data=subset(Data,redshift < 25)
 ##
 ## Log modulus transformation
